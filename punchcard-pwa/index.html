@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Punch Card">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <title>Punch Card Generator</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #3498db;
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --error: #e74c3c;
+      --radius: 8px;
+      --max-width: 600px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--primary);
+      padding: 16px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.4rem;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .mode-toggle {
+      display: flex;
+      margin-bottom: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 2px solid var(--primary);
+    }
+    .mode-toggle button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: var(--card-bg);
+      color: var(--primary);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mode-toggle button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    section {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+    textarea {
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+      min-height: 200px;
+    }
+    .error {
+      color: var(--error);
+      font-size: 0.85rem;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    input[type="file"] {
+      margin-bottom: 12px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+    }
+    .slider-row span {
+      min-width: 32px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .checkbox-row {
+      margin-bottom: 12px;
+    }
+    .checkbox-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    #imageControls { display: none; }
+    #previewContainer {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+    #previewContainer h2 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    #previewGrid {
+      display: grid;
+      grid-template-columns: repeat(24, 1fr);
+      gap: 1px;
+      margin-bottom: 8px;
+      max-width: 100%;
+    }
+    .cell {
+      aspect-ratio: 1;
+      background: #eee;
+      border-radius: 1px;
+    }
+    .cell.punched {
+      background: var(--primary);
+    }
+    .cell.lead {
+      background: #7f8c8d;
+    }
+    .cell.editable {
+      cursor: pointer;
+    }
+    .cell.editable:hover {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      z-index: 1;
+    }
+    #rowCount {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    #generateBtn {
+      background: var(--accent);
+      color: #fff;
+    }
+    #generateBtn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+    #downloadBtn {
+      background: var(--primary);
+      color: #fff;
+    }
+    #downloadBtn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+    #svgOutput {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      overflow-x: auto;
+      text-align: center;
+    }
+    #svgOutput svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .img-mode-btn {
+      flex: 1;
+      padding: 8px;
+      border: 2px solid var(--primary);
+      background: var(--card-bg);
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius);
+    }
+    .img-mode-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    #simplePreviewContainer {
+      margin-bottom: 12px;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #simplePreviewContainer img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    #cropContainer {
+      position: relative;
+      margin-bottom: 12px;
+      touch-action: none;
+      user-select: none;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #cropContainer canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .hidden { display: none !important; }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .header-row h1 {
+      margin-bottom: 0;
+    }
+    #refreshAllBtn {
+      position: absolute;
+      right: 0;
+      background: none;
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+    #refreshAllBtn:active {
+      background: var(--primary);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-row">
+    <h1>Punch Card Generator</h1>
+    <button id="refreshAllBtn">Refresh All</button>
+  </div>
+
+  <div class="mode-toggle">
+    <button id="imageModeBtn" class="active">Image Upload</button>
+    <button id="textModeBtn">Text Input</button>
+    <button id="blankModeBtn">Blank Card</button>
+  </div>
+
+  <section id="textSection" class="hidden">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <label for="txtFileInput" style="margin:0;white-space:nowrap">Load .txt file:</label>
+      <input type="file" id="txtFileInput" accept=".txt,text/plain">
+    </div>
+    <textarea id="textInput" placeholder="Enter pattern (24 chars per line)&#10;x = punch, - = blank&#10;&#10;Example:&#10;xx--xx--xx--xx--xx--xx--&#10;--xx--xx--xx--xx--xx--xx"></textarea>
+    <div id="textError" class="error"></div>
+    <p style="font-size:0.8rem;color:#888;margin-top:8px">Each line must be exactly 24 characters. Use <strong>x</strong> for a punched hole and <strong>-</strong> for blank. You can also load a .txt file above.</p>
+  </section>
+
+  <section id="blankSection" class="hidden">
+    <div style="display:flex;align-items:center;gap:8px">
+      <label for="blankRows" style="margin:0;white-space:nowrap">Number of rows:</label>
+      <input type="number" id="blankRows" min="1" max="200" value="20" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:1rem">
+      <button id="createBlankBtn" style="padding:8px 16px;border:none;border-radius:4px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer">Create</button>
+    </div>
+    <p style="font-size:0.8rem;color:#888;margin-top:8px">Creates an empty card with the specified number of rows. You can then click individual cells in the preview below to design your pattern.</p>
+  </section>
+
+  <section id="imageSection">
+    <label>Upload an image to convert to a punch pattern:</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <canvas id="hiddenCanvas" style="display:none"></canvas>
+    <canvas id="analysisCanvas" style="display:none"></canvas>
+    <div id="imageModeToggle" class="hidden" style="display:flex;gap:8px;margin-bottom:4px">
+      <button id="simpleModeBtn" class="img-mode-btn active">Simple</button>
+      <button id="chartScanBtn" class="img-mode-btn">Chart Scan</button>
+    </div>
+    <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:#888;margin-bottom:12px"><strong>Simple</strong> converts any image to a 24-pixel-wide pattern. <strong>Chart Scan</strong> is for photos of existing punch card charts — it detects the grid and reads filled/empty cells.</p>
+    <div id="simplePreviewContainer" class="hidden">
+      <img id="simplePreviewImg" alt="Uploaded image">
+    </div>
+    <div id="cropContainer" class="hidden">
+      <p style="font-size:0.8rem;color:#888;margin-bottom:6px">Drag the handles or edges to crop to just the chart area. You can also drag inside the box to reposition it.</p>
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div id="chartScanControls" class="hidden">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <label for="chartRows" style="margin:0;white-space:nowrap">Rows in image:</label>
+        <input type="number" id="chartRows" min="1" max="200" placeholder="e.g. 40" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:1rem" required>
+        <span style="font-size:0.8rem;color:#666">(required)</span>
+      </div>
+      <div class="slider-row">
+        <label for="sampleSlider" style="margin:0;white-space:nowrap">Sample region:</label>
+        <input type="range" id="sampleSlider" min="20" max="70" value="40">
+        <span id="sampleValue">40%</span>
+      </div>
+      <p style="font-size:0.75rem;color:#999;margin:-4px 0 8px">How much of each cell's center area to sample for darkness. Lower values focus on the very center (ignoring grid lines); raise if marks are being missed.</p>
+      <button id="detectGridBtn" style="width:100%;padding:10px;border:none;border-radius:4px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:8px">Detect Grid &amp; Process</button>
+      <div id="gridStatus" style="font-size:0.85rem;color:#666;margin-bottom:8px"></div>
+    </div>
+    <div id="imageControls">
+      <div class="slider-row">
+        <label for="thresholdSlider" style="margin:0;white-space:nowrap">Threshold:</label>
+        <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+        <span id="thresholdValue">128</span>
+      </div>
+      <p style="font-size:0.75rem;color:#999;margin:-4px 0 4px">Cells darker than this value are marked as punched. 128 = 50% grey. Lower values require darker cells to count as filled; raise if scanned pages have grey backgrounds.</p>
+      <div class="checkbox-row">
+        <label><input type="checkbox" id="invertToggle"> Invert (light = punch)</label>
+      </div>
+      <p style="font-size:0.75rem;color:#999;margin:-4px 0 8px">Check this if your chart uses light/white marks for punched holes on a dark background.</p>
+    </div>
+  </section>
+
+  <div id="previewContainer">
+    <h2>Pattern Preview</h2>
+    <p id="previewHint" style="font-size:0.8rem;color:#888;margin-bottom:8px;display:none">Click any cell to toggle it between punched (dark) and blank. The grey rows at top and bottom are lead-in/lead-out rows and cannot be edited.</p>
+    <div id="previewGrid"></div>
+    <div id="rowCount"></div>
+  </div>
+
+  <div class="checkbox-row" style="margin-bottom:12px">
+    <label><input type="checkbox" id="jacquardToggle"> Double Bed Jacquard (each row becomes two: original + inverse)</label>
+  </div>
+
+  <div class="actions">
+    <button id="generateBtn" disabled>Generate SVG</button>
+    <button id="downloadBtn" disabled>Download SVG</button>
+  </div>
+
+  <div id="svgOutput"></div>
+
+  <script>
+    // === CONSTANTS ===
+    const PATTERN_COLS = [
+      19.25, 23.75, 28.25, 32.75, 37.25, 41.75, 46.25, 50.75,
+      55.25, 59.75, 64.25, 68.75, 73.25, 77.75, 82.25, 86.75,
+      91.25, 95.75, 100.25, 104.75, 109.25, 113.75, 118.25, 122.75
+    ];
+    const EDGE_GUIDE_X = [13.5, 128.5];
+    const TRANSPORT_X = [6.75, 135.25];
+    const PATTERN_R = 1.75;
+    const EDGE_R = 1.5;
+    const TRANSPORT_R = 1.75;
+    const CARD_WIDTH = 142.0;
+    const STROKE_W = 0.1;
+
+    // === STATE ===
+    let currentMode = 'image';
+    let currentGrid = [];
+    let originalImageData = null;
+    let imageWidth = 24;
+    let imageHeight = 0;
+    let generatedSVGString = null;
+    let imageProcessingMode = 'simple';
+    let sourceImage = null;
+    let cropRect = { x: 0, y: 0, w: 1, h: 1 };
+    let cropDragState = null;
+    let detectedCells = null;
+    let chartScanImageData = null;
+
+    // === DOM REFS ===
+    const textModeBtn = document.getElementById('textModeBtn');
+    const imageModeBtn = document.getElementById('imageModeBtn');
+    const blankModeBtn = document.getElementById('blankModeBtn');
+    const textSection = document.getElementById('textSection');
+    const imageSection = document.getElementById('imageSection');
+    const blankSection = document.getElementById('blankSection');
+    const blankRows = document.getElementById('blankRows');
+    const createBlankBtn = document.getElementById('createBlankBtn');
+    const txtFileInput = document.getElementById('txtFileInput');
+    const textInput = document.getElementById('textInput');
+    const textError = document.getElementById('textError');
+    const imageInput = document.getElementById('imageInput');
+    const hiddenCanvas = document.getElementById('hiddenCanvas');
+    const analysisCanvas = document.getElementById('analysisCanvas');
+    const imageModeToggle = document.getElementById('imageModeToggle');
+    const simpleModeBtn = document.getElementById('simpleModeBtn');
+    const chartScanBtn = document.getElementById('chartScanBtn');
+    const simplePreviewContainer = document.getElementById('simplePreviewContainer');
+    const simplePreviewImg = document.getElementById('simplePreviewImg');
+    const cropContainer = document.getElementById('cropContainer');
+    const cropCanvas = document.getElementById('cropCanvas');
+    const chartScanControls = document.getElementById('chartScanControls');
+    const sampleSlider = document.getElementById('sampleSlider');
+    const sampleValueEl = document.getElementById('sampleValue');
+    const chartRowsInput = document.getElementById('chartRows');
+    const detectGridBtn = document.getElementById('detectGridBtn');
+    const gridStatus = document.getElementById('gridStatus');
+    const imageModeHint = document.getElementById('imageModeHint');
+    const imageControls = document.getElementById('imageControls');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+    const thresholdValue = document.getElementById('thresholdValue');
+    const invertToggle = document.getElementById('invertToggle');
+    const previewGrid = document.getElementById('previewGrid');
+    const rowCount = document.getElementById('rowCount');
+    const previewHint = document.getElementById('previewHint');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const svgOutput = document.getElementById('svgOutput');
+    const jacquardToggle = document.getElementById('jacquardToggle');
+    const refreshAllBtn = document.getElementById('refreshAllBtn');
+
+    // === REFRESH ALL ===
+    refreshAllBtn.addEventListener('click', () => {
+      // Reset state
+      currentGrid = [];
+      originalImageData = null;
+      imageHeight = 0;
+      generatedSVGString = null;
+      imageProcessingMode = 'simple';
+      sourceImage = null;
+      cropRect = { x: 0, y: 0, w: 1, h: 1 };
+      cropDragState = null;
+      detectedCells = null;
+      chartScanImageData = null;
+
+      // Reset text input
+      textInput.value = '';
+      textError.textContent = '';
+      txtFileInput.value = '';
+
+      // Reset image input
+      imageInput.value = '';
+      imageControls.style.display = 'none';
+      simplePreviewContainer.classList.add('hidden');
+      cropContainer.style.display = 'none';
+      chartScanControls.style.display = 'none';
+      imageModeHint && (imageModeHint.style.display = '');
+      thresholdSlider.value = 128;
+      thresholdValue.textContent = '128';
+      invertToggle.checked = false;
+      sampleSlider.value = 40;
+      sampleValueEl.textContent = '40%';
+      chartRowsInput.value = '';
+      gridStatus.textContent = '';
+
+      // Reset jacquard and blank card
+      jacquardToggle.checked = false;
+      blankRows.value = 20;
+
+      // Reset preview and output
+      previewGrid.innerHTML = '';
+      rowCount.textContent = '';
+      previewHint.style.display = 'none';
+      svgOutput.innerHTML = '';
+      generateBtn.disabled = true;
+      downloadBtn.disabled = true;
+
+      // Reset to image mode
+      setMode('image');
+    });
+
+    // === MODE TOGGLE ===
+    function setMode(mode) {
+      currentMode = mode;
+      textModeBtn.classList.toggle('active', mode === 'text');
+      imageModeBtn.classList.toggle('active', mode === 'image');
+      blankModeBtn.classList.toggle('active', mode === 'blank');
+      textSection.classList.toggle('hidden', mode !== 'text');
+      imageSection.classList.toggle('hidden', mode !== 'image');
+      blankSection.classList.toggle('hidden', mode !== 'blank');
+    }
+
+    textModeBtn.addEventListener('click', () => {
+      setMode('text');
+      if (currentGrid.length > 0 && !textInput.value.trim()) {
+        textInput.value = currentGrid.join('\n');
+      }
+      handleTextChange();
+    });
+
+    imageModeBtn.addEventListener('click', () => {
+      setMode('image');
+      if (sourceImage) {
+        if (imageProcessingMode === 'simple') {
+          runSimpleMode(sourceImage);
+        } else {
+          initChartScanMode(sourceImage);
+        }
+      } else if (originalImageData) {
+        processImage();
+      } else {
+        currentGrid = [];
+        renderPreview([]);
+        generateBtn.disabled = true;
+      }
+    });
+
+    blankModeBtn.addEventListener('click', () => {
+      setMode('blank');
+      if (currentGrid.length === 0) {
+        createBlankGrid();
+      } else {
+        renderPreview(currentGrid);
+        generateBtn.disabled = false;
+      }
+    });
+
+    function createBlankGrid() {
+      const rows = Math.max(1, Math.min(200, parseInt(blankRows.value) || 20));
+      blankRows.value = rows;
+      currentGrid = Array.from({ length: rows }, () => '------------------------');
+      renderPreview(currentGrid);
+      generateBtn.disabled = false;
+    }
+
+    createBlankBtn.addEventListener('click', createBlankGrid);
+
+    // === TEXT INPUT MODE ===
+    let textDebounce = null;
+    textInput.addEventListener('input', () => {
+      clearTimeout(textDebounce);
+      textDebounce = setTimeout(handleTextChange, 300);
+    });
+
+    txtFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        textInput.value = ev.target.result.replace(/\r/g, '');
+        handleTextChange();
+        txtFileInput.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    function handleTextChange() {
+      if (currentMode !== 'text') return;
+      const text = textInput.value;
+      if (!text.trim()) {
+        currentGrid = [];
+        textError.textContent = '';
+        renderPreview([]);
+        generateBtn.disabled = true;
+        return;
+      }
+      const { grid, errors } = parseTextInput(text);
+      textError.textContent = errors.join('\n');
+      if (errors.length === 0) {
+        currentGrid = grid;
+        renderPreview(grid);
+        generateBtn.disabled = false;
+      } else {
+        currentGrid = [];
+        renderPreview([]);
+        generateBtn.disabled = true;
+      }
+    }
+
+    function parseTextInput(text) {
+      const lines = text.split('\n');
+      const errors = [];
+      const grid = [];
+
+      // Remove trailing empty lines
+      while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+        lines.pop();
+      }
+
+      if (lines.length === 0) {
+        errors.push('At least 1 row is required.');
+        return { grid, errors };
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].toLowerCase().replace(/\s+$/, '');
+        if (line.length !== 24) {
+          errors.push('Line ' + (i + 1) + ': expected 24 characters, got ' + line.length);
+        }
+        if (!/^[x\-]+$/.test(line)) {
+          errors.push('Line ' + (i + 1) + ': only \'x\' and \'-\' characters allowed');
+        }
+        grid.push(line.padEnd(24, '-').substring(0, 24));
+      }
+
+      return { grid, errors };
+    }
+
+    // === IMAGE UPLOAD MODE ===
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          sourceImage = img;
+          imageModeToggle.classList.remove('hidden');
+          imageModeToggle.style.display = 'flex';
+          imageModeHint.classList.remove('hidden');
+          if (imageProcessingMode === 'simple') {
+            runSimpleMode(img);
+          } else {
+            initChartScanMode(img);
+          }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function runSimpleMode(img) {
+      cropContainer.classList.add('hidden');
+      chartScanControls.classList.add('hidden');
+      gridStatus.textContent = '';
+      imageControls.style.display = 'block';
+      simplePreviewImg.src = img.src;
+      simplePreviewContainer.classList.remove('hidden');
+      const targetWidth = 24;
+      const aspect = img.height / img.width;
+      const targetHeight = Math.round(targetWidth * aspect);
+      imageWidth = targetWidth;
+      imageHeight = targetHeight;
+      const ctx = hiddenCanvas.getContext('2d');
+      hiddenCanvas.width = targetWidth;
+      hiddenCanvas.height = targetHeight;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      originalImageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+      processImage();
+    }
+
+    function initChartScanMode(img) {
+      simplePreviewContainer.classList.add('hidden');
+      cropContainer.classList.remove('hidden');
+      chartScanControls.classList.remove('hidden');
+      imageControls.style.display = 'block';
+      cropRect = { x: 0, y: 0, w: 1, h: 1 };
+      detectedCells = null;
+      chartScanImageData = null;
+      drawCrop();
+    }
+
+    simpleModeBtn.addEventListener('click', () => {
+      imageProcessingMode = 'simple';
+      simpleModeBtn.classList.add('active');
+      chartScanBtn.classList.remove('active');
+      if (sourceImage) runSimpleMode(sourceImage);
+    });
+
+    chartScanBtn.addEventListener('click', () => {
+      imageProcessingMode = 'chartScan';
+      chartScanBtn.classList.add('active');
+      simpleModeBtn.classList.remove('active');
+      if (sourceImage) initChartScanMode(sourceImage);
+    });
+
+    thresholdSlider.addEventListener('input', () => {
+      thresholdValue.textContent = thresholdSlider.value;
+      if (imageProcessingMode === 'simple' && originalImageData) {
+        processImage();
+      } else if (imageProcessingMode === 'chartScan' && detectedCells && chartScanImageData) {
+        reprocessChartScan();
+      }
+    });
+
+    invertToggle.addEventListener('change', () => {
+      if (imageProcessingMode === 'simple' && originalImageData) {
+        processImage();
+      } else if (imageProcessingMode === 'chartScan' && detectedCells && chartScanImageData) {
+        reprocessChartScan();
+      }
+    });
+
+    sampleSlider.addEventListener('input', () => {
+      sampleValueEl.textContent = sampleSlider.value + '%';
+      if (detectedCells && chartScanImageData) {
+        reprocessChartScan();
+      }
+    });
+
+    function reprocessChartScan() {
+      const ratio = parseInt(sampleSlider.value) / 100;
+      const threshold = parseInt(thresholdSlider.value);
+      const invert = invertToggle.checked;
+      const grid = processChartScanGrid(chartScanImageData, detectedCells, threshold, invert, ratio);
+      currentGrid = grid;
+      renderPreview(grid);
+      generateBtn.disabled = false;
+    }
+
+    function processImage() {
+      if (!originalImageData) return;
+      const threshold = parseInt(thresholdSlider.value);
+      const invert = invertToggle.checked;
+      const pixels = originalImageData.data;
+      const grid = [];
+
+      for (let row = 0; row < imageHeight; row++) {
+        let line = '';
+        for (let col = 0; col < 24; col++) {
+          const idx = (row * 24 + col) * 4;
+          const r = pixels[idx];
+          const g = pixels[idx + 1];
+          const b = pixels[idx + 2];
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          const isDark = luminance < threshold;
+          const isPunched = invert ? !isDark : isDark;
+          line += isPunched ? 'x' : '-';
+        }
+        grid.push(line);
+      }
+
+      currentGrid = grid;
+      renderPreview(grid);
+      generateBtn.disabled = false;
+    }
+
+    // === CROP UI ===
+    function drawCrop() {
+      if (!sourceImage) return;
+      const containerWidth = cropContainer.clientWidth || 560;
+      const aspect = sourceImage.height / sourceImage.width;
+      const displayW = containerWidth;
+      const displayH = Math.round(containerWidth * aspect);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cropCanvas.style.width = displayW + 'px';
+      cropCanvas.style.height = displayH + 'px';
+      cropCanvas.width = displayW * dpr;
+      cropCanvas.height = displayH * dpr;
+      const ctx = cropCanvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.drawImage(sourceImage, 0, 0, displayW, displayH);
+      const cx = cropRect.x * displayW;
+      const cy = cropRect.y * displayH;
+      const cw = cropRect.w * displayW;
+      const ch = cropRect.h * displayH;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, displayW, cy);
+      ctx.fillRect(0, cy + ch, displayW, displayH - cy - ch);
+      ctx.fillRect(0, cy, cx, ch);
+      ctx.fillRect(cx + cw, cy, displayW - cx - cw, ch);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx, cy, cw, ch);
+      const hs = 10;
+      ctx.fillStyle = '#fff';
+      var handles = [
+        [cx, cy], [cx + cw, cy], [cx, cy + ch], [cx + cw, cy + ch],
+        [cx + cw / 2, cy], [cx + cw / 2, cy + ch],
+        [cx, cy + ch / 2], [cx + cw, cy + ch / 2]
+      ];
+      for (var hi = 0; hi < handles.length; hi++) {
+        ctx.fillRect(handles[hi][0] - hs / 2, handles[hi][1] - hs / 2, hs, hs);
+      }
+    }
+
+    function getCropPointerPos(e) {
+      const rect = cropCanvas.getBoundingClientRect();
+      return {
+        nx: (e.clientX - rect.left) / rect.width,
+        ny: (e.clientY - rect.top) / rect.height
+      };
+    }
+
+    function hitTestHandle(nx, ny) {
+      const tol = 0.04;
+      const cr = cropRect;
+      const cx = cr.x, cy = cr.y, cw = cr.w, ch = cr.h;
+      var corners = [
+        { id: 'tl', x: cx, y: cy }, { id: 'tr', x: cx + cw, y: cy },
+        { id: 'bl', x: cx, y: cy + ch }, { id: 'br', x: cx + cw, y: cy + ch }
+      ];
+      for (var i = 0; i < corners.length; i++) {
+        if (Math.abs(nx - corners[i].x) < tol && Math.abs(ny - corners[i].y) < tol)
+          return corners[i].id;
+      }
+      var edges = [
+        { id: 't', x: cx + cw / 2, y: cy }, { id: 'b', x: cx + cw / 2, y: cy + ch },
+        { id: 'l', x: cx, y: cy + ch / 2 }, { id: 'r', x: cx + cw, y: cy + ch / 2 }
+      ];
+      for (var i = 0; i < edges.length; i++) {
+        if (Math.abs(nx - edges[i].x) < tol && Math.abs(ny - edges[i].y) < tol)
+          return edges[i].id;
+      }
+      if (nx > cx && nx < cx + cw && ny > cy && ny < cy + ch) return 'move';
+      return null;
+    }
+
+    cropCanvas.addEventListener('pointerdown', (e) => {
+      const { nx, ny } = getCropPointerPos(e);
+      const handle = hitTestHandle(nx, ny);
+      if (!handle) return;
+      cropDragState = { handle: handle, startNx: nx, startNy: ny, startRect: Object.assign({}, cropRect) };
+      cropCanvas.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+
+    cropCanvas.addEventListener('pointermove', (e) => {
+      if (!cropDragState) return;
+      const { nx, ny } = getCropPointerPos(e);
+      const dx = nx - cropDragState.startNx;
+      const dy = ny - cropDragState.startNy;
+      const sr = cropDragState.startRect;
+      const minSize = 0.08;
+      var r = Object.assign({}, cropRect);
+      switch (cropDragState.handle) {
+        case 'move':
+          r.x = Math.max(0, Math.min(1 - sr.w, sr.x + dx));
+          r.y = Math.max(0, Math.min(1 - sr.h, sr.y + dy));
+          r.w = sr.w; r.h = sr.h;
+          break;
+        case 'tl':
+          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
+          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
+          r.w = sr.x + sr.w - r.x; r.h = sr.y + sr.h - r.y;
+          break;
+        case 'tr':
+          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
+          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
+          r.h = sr.y + sr.h - r.y;
+          break;
+        case 'bl':
+          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
+          r.w = sr.x + sr.w - r.x;
+          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
+          break;
+        case 'br':
+          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
+          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
+          break;
+        case 't':
+          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
+          r.h = sr.y + sr.h - r.y;
+          break;
+        case 'b':
+          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
+          break;
+        case 'l':
+          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
+          r.w = sr.x + sr.w - r.x;
+          break;
+        case 'r':
+          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
+          break;
+      }
+      cropRect = r;
+      drawCrop();
+      e.preventDefault();
+    });
+
+    cropCanvas.addEventListener('pointerup', () => { cropDragState = null; });
+    cropCanvas.addEventListener('pointercancel', () => { cropDragState = null; });
+
+    // === CHART SCAN: GRID DETECTION ===
+    function getCroppedImageData() {
+      const ctx = analysisCanvas.getContext('2d');
+      const sx = Math.round(cropRect.x * sourceImage.width);
+      const sy = Math.round(cropRect.y * sourceImage.height);
+      const sw = Math.max(1, Math.round(cropRect.w * sourceImage.width));
+      const sh = Math.max(1, Math.round(cropRect.h * sourceImage.height));
+      const analysisWidth = Math.min(sw, 1200);
+      const scale = analysisWidth / sw;
+      const analysisHeight = Math.max(1, Math.round(sh * scale));
+      analysisCanvas.width = analysisWidth;
+      analysisCanvas.height = analysisHeight;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, analysisWidth, analysisHeight);
+      return ctx.getImageData(0, 0, analysisWidth, analysisHeight);
+    }
+
+    function computeProjections(imageData) {
+      var data = imageData.data, w = imageData.width, h = imageData.height;
+      var hProj = new Float32Array(h);
+      var vProj = new Float32Array(w);
+      for (var y = 0; y < h; y++) {
+        var sum = 0;
+        for (var x = 0; x < w; x++) {
+          var idx = (y * w + x) * 4;
+          var lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+          var darkness = 1.0 - lum / 255.0;
+          sum += darkness;
+          vProj[x] += darkness;
+        }
+        hProj[y] = sum / w;
+      }
+      for (var x = 0; x < w; x++) vProj[x] /= h;
+      return { hProj: hProj, vProj: vProj };
+    }
+
+    function boxSmooth(arr, radius) {
+      var result = new Float32Array(arr.length);
+      for (var i = 0; i < arr.length; i++) {
+        var sum = 0, count = 0;
+        for (var j = Math.max(0, i - radius); j <= Math.min(arr.length - 1, i + radius); j++) {
+          sum += arr[j]; count++;
+        }
+        result[i] = sum / count;
+      }
+      return result;
+    }
+
+    function findGridLines(profile) {
+      var smoothed = boxSmooth(profile, 3);
+      var n = smoothed.length;
+      if (n < 10) return null;
+      var mean = 0;
+      for (var i = 0; i < n; i++) mean += smoothed[i];
+      mean /= n;
+      var variance = 0;
+      for (var i = 0; i < n; i++) variance += (smoothed[i] - mean) * (smoothed[i] - mean);
+      var stddev = Math.sqrt(variance / n);
+      var peakThreshold = mean + 0.5 * stddev;
+      var candidates = [];
+      for (var i = 2; i < n - 2; i++) {
+        if (smoothed[i] > peakThreshold &&
+            smoothed[i] >= smoothed[i - 1] && smoothed[i] >= smoothed[i + 1] &&
+            smoothed[i] >= smoothed[i - 2] && smoothed[i] >= smoothed[i + 2]) {
+          candidates.push(i);
+        }
+      }
+      if (candidates.length < 3) return null;
+
+      // Try autocorrelation first — more robust to missing/doubled peaks
+      var period = estimatePeriodAutocorrelation(smoothed);
+      // Fall back to peak-gap-median if autocorrelation fails
+      if (!period || period < 5) {
+        period = estimatePeriod(candidates);
+      }
+      if (!period || period < 5) return null;
+      return buildRegularGrid(candidates, period, n);
+    }
+
+    function estimatePeriod(candidates) {
+      var gaps = [];
+      for (var i = 1; i < candidates.length; i++) gaps.push(candidates[i] - candidates[i - 1]);
+      if (gaps.length === 0) return null;
+      gaps.sort(function(a, b) { return a - b; });
+      var median = gaps[Math.floor(gaps.length / 2)];
+      var filtered = gaps.filter(function(g) { return Math.abs(g - median) < median * 0.4; });
+      if (filtered.length === 0) return median;
+      var sum = 0;
+      for (var i = 0; i < filtered.length; i++) sum += filtered[i];
+      return sum / filtered.length;
+    }
+
+    function estimatePeriodAutocorrelation(profile) {
+      // Compute autocorrelation of the projection profile to find the
+      // dominant period. This is far more robust than peak-gap-median
+      // because it uses the entire signal, tolerating missing/doubled lines.
+      var n = profile.length;
+      if (n < 20) return null;
+
+      // Subtract mean so autocorrelation measures periodicity, not DC offset
+      var mean = 0;
+      for (var i = 0; i < n; i++) mean += profile[i];
+      mean /= n;
+      var centered = new Float32Array(n);
+      for (var i = 0; i < n; i++) centered[i] = profile[i] - mean;
+
+      // Search lags from 5px up to n/3 (we need at least 3 repetitions)
+      var minLag = 5;
+      var maxLag = Math.floor(n / 3);
+      if (maxLag <= minLag) return null;
+
+      var acorr = new Float32Array(maxLag + 1);
+      // Normalization: autocorrelation at lag 0
+      var ac0 = 0;
+      for (var i = 0; i < n; i++) ac0 += centered[i] * centered[i];
+      if (ac0 === 0) return null;
+
+      for (var lag = minLag; lag <= maxLag; lag++) {
+        var sum = 0;
+        for (var i = 0; i < n - lag; i++) {
+          sum += centered[i] * centered[i + lag];
+        }
+        acorr[lag] = sum / ac0;
+      }
+
+      // Find the first prominent peak in the autocorrelation.
+      // Walk past the initial dip to avoid picking up sub-period noise.
+      // First, find where acorr dips below 0 (or its minimum before rising)
+      var searchStart = minLag;
+      for (var i = minLag; i < maxLag; i++) {
+        if (acorr[i] < acorr[i + 1]) {
+          searchStart = i;
+          break;
+        }
+      }
+
+      // Now find the highest peak from searchStart onward
+      var bestLag = -1;
+      var bestVal = 0;
+      for (var i = searchStart + 1; i < maxLag; i++) {
+        if (acorr[i] > bestVal &&
+            acorr[i] >= acorr[i - 1] && acorr[i] >= acorr[i + 1]) {
+          bestVal = acorr[i];
+          bestLag = i;
+          // Only take the first clear peak — it's the fundamental period
+          // Require a minimum correlation strength
+          if (bestVal > 0.15) break;
+        }
+      }
+
+      if (bestLag < minLag || bestVal < 0.05) return null;
+
+      // Parabolic interpolation for sub-pixel accuracy
+      if (bestLag > minLag && bestLag < maxLag) {
+        var a = acorr[bestLag - 1];
+        var b = acorr[bestLag];
+        var c = acorr[bestLag + 1];
+        var denom = 2 * (2 * b - a - c);
+        if (denom !== 0) {
+          var offset = (a - c) / denom;
+          if (Math.abs(offset) < 0.5) {
+            return bestLag + offset;
+          }
+        }
+      }
+
+      return bestLag;
+    }
+
+    function buildRegularGrid(candidates, period, totalLength) {
+      var bestLines = null, bestScore = -1;
+      var startCount = Math.min(candidates.length, 5);
+      for (var s = 0; s < startCount; s++) {
+        var lines = [candidates[s]];
+        var score = 1;
+        var pos = candidates[s] + period;
+        while (pos < totalLength - 2) {
+          var snap = findNearestCandidate(candidates, Math.round(pos), period * 0.3);
+          if (snap !== null) { lines.push(snap); pos = snap + period; score++; }
+          else { lines.push(Math.round(pos)); pos += period; }
+        }
+        pos = candidates[s] - period;
+        while (pos > 2) {
+          var snap = findNearestCandidate(candidates, Math.round(pos), period * 0.3);
+          if (snap !== null) { lines.unshift(snap); pos = snap - period; score++; }
+          else { lines.unshift(Math.round(pos)); pos -= period; }
+        }
+        if (score > bestScore) { bestScore = score; bestLines = lines; }
+      }
+      return bestLines;
+    }
+
+    function findNearestCandidate(candidates, target, tolerance) {
+      var best = null, bestDist = tolerance + 1;
+      for (var i = 0; i < candidates.length; i++) {
+        var dist = Math.abs(candidates[i] - target);
+        if (dist < bestDist) { bestDist = dist; best = candidates[i]; }
+      }
+      return bestDist <= tolerance ? best : null;
+    }
+
+    function adjustLinesToCount(lines, target, totalLength) {
+      if (lines.length === target) return lines;
+      var medianGap = getMedianGap(lines);
+      // Merge too-close lines
+      var merged = [lines[0]];
+      for (var i = 1; i < lines.length; i++) {
+        if (lines[i] - merged[merged.length - 1] < medianGap * 0.5) {
+          merged[merged.length - 1] = Math.round((merged[merged.length - 1] + lines[i]) / 2);
+        } else {
+          merged.push(lines[i]);
+        }
+      }
+      // Split too-wide gaps
+      if (merged.length < target) {
+        var newMedian = getMedianGap(merged);
+        var result = [merged[0]];
+        for (var i = 1; i < merged.length; i++) {
+          var gap = merged[i] - merged[i - 1];
+          if (gap > newMedian * 1.5 && result.length < target - (merged.length - i)) {
+            var divisions = Math.round(gap / newMedian);
+            for (var d = 1; d < divisions; d++) {
+              result.push(Math.round(merged[i - 1] + gap * d / divisions));
+            }
+          }
+          result.push(merged[i]);
+        }
+        merged = result;
+      }
+      if (merged.length > target) merged = merged.slice(0, target);
+      return merged;
+    }
+
+    function getMedianGap(lines) {
+      var gaps = [];
+      for (var i = 1; i < lines.length; i++) gaps.push(lines[i] - lines[i - 1]);
+      gaps.sort(function(a, b) { return a - b; });
+      return gaps[Math.floor(gaps.length / 2)] || 1;
+    }
+
+    function computeCellBounds(vLines, hLines) {
+      var cells = [];
+      for (var r = 0; r < hLines.length - 1; r++) {
+        var row = [];
+        for (var c = 0; c < vLines.length - 1; c++) {
+          row.push({ x: vLines[c], y: hLines[r], w: vLines[c + 1] - vLines[c], h: hLines[r + 1] - hLines[r] });
+        }
+        cells.push(row);
+      }
+      return cells;
+    }
+
+    // === CHART SCAN: CENTER SAMPLING ===
+    function getCellCenterLuminance(imageData, cell, ratio) {
+      var data = imageData.data, w = imageData.width;
+      var marginX = cell.w * (1 - ratio) / 2;
+      var marginY = cell.h * (1 - ratio) / 2;
+      var sx = Math.round(cell.x + marginX);
+      var sy = Math.round(cell.y + marginY);
+      var sw = Math.max(1, Math.round(cell.w * ratio));
+      var sh = Math.max(1, Math.round(cell.h * ratio));
+      var totalLum = 0, pixelCount = 0;
+      for (var py = sy; py < sy + sh && py < imageData.height; py++) {
+        for (var px = sx; px < sx + sw && px < w; px++) {
+          var idx = (py * w + px) * 4;
+          totalLum += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+          pixelCount++;
+        }
+      }
+      return pixelCount > 0 ? totalLum / pixelCount : 255;
+    }
+
+    function processChartScanGrid(imageData, cells, threshold, invert, ratio) {
+      var grid = [];
+      for (var r = 0; r < cells.length; r++) {
+        var line = '';
+        for (var c = 0; c < Math.min(cells[r].length, 24); c++) {
+          var avgLum = getCellCenterLuminance(imageData, cells[r][c], ratio);
+          var isDark = avgLum < threshold;
+          var isPunched = invert ? !isDark : isDark;
+          line += isPunched ? 'x' : '-';
+        }
+        line = line.padEnd(24, '-').substring(0, 24);
+        grid.push(line);
+      }
+      return grid;
+    }
+
+    function otsuThreshold(values) {
+      var hist = new Array(256).fill(0);
+      for (var i = 0; i < values.length; i++) hist[Math.round(Math.max(0, Math.min(255, values[i])))]++;
+      var total = values.length;
+      var sumAll = 0;
+      for (var i = 0; i < 256; i++) sumAll += i * hist[i];
+      var bestThresh = 128, bestVariance = 0;
+      var sumBg = 0, countBg = 0;
+      for (var t = 0; t < 256; t++) {
+        countBg += hist[t];
+        if (countBg === 0) continue;
+        var countFg = total - countBg;
+        if (countFg === 0) break;
+        sumBg += t * hist[t];
+        var meanBg = sumBg / countBg;
+        var meanFg = (sumAll - sumBg) / countFg;
+        var bv = countBg * countFg * (meanBg - meanFg) * (meanBg - meanFg);
+        if (bv > bestVariance) { bestVariance = bv; bestThresh = t; }
+      }
+      return bestThresh;
+    }
+
+    // === DETECT GRID & PROCESS BUTTON ===
+    detectGridBtn.addEventListener('click', function() {
+      if (!sourceImage) return;
+
+      var userRows = parseInt(chartRowsInput.value);
+      if (!(userRows > 0)) {
+        gridStatus.textContent = 'Please enter the number of rows in the chart.';
+        gridStatus.style.color = 'var(--error)';
+        chartRowsInput.focus();
+        return;
+      }
+
+      gridStatus.textContent = 'Analyzing image...';
+      gridStatus.style.color = '#666';
+      requestAnimationFrame(function() {
+        try {
+          var imgData = getCroppedImageData();
+          var w = imgData.width, h = imgData.height;
+
+          // Divide canvas evenly into 24 columns x userRows rows
+          var vLines = [];
+          var colStep = w / 24;
+          for (var i = 0; i <= 24; i++) vLines.push(Math.round(i * colStep));
+
+          var hLines = [];
+          var rowStep = h / userRows;
+          for (var i = 0; i <= userRows; i++) hLines.push(Math.round(i * rowStep));
+
+          var cells = computeCellBounds(vLines, hLines);
+          detectedCells = cells;
+          chartScanImageData = imgData;
+
+          var ratio = parseInt(sampleSlider.value) / 100;
+          var luminances = [];
+          for (var r = 0; r < cells.length; r++) {
+            for (var c = 0; c < Math.min(cells[r].length, 24); c++) {
+              luminances.push(getCellCenterLuminance(imgData, cells[r][c], ratio));
+            }
+          }
+
+          var autoThresh = otsuThreshold(luminances);
+          thresholdSlider.value = autoThresh;
+          thresholdValue.textContent = autoThresh;
+
+          var invert = invertToggle.checked;
+          var grid = processChartScanGrid(imgData, cells, autoThresh, invert, ratio);
+          currentGrid = grid;
+          renderPreview(grid);
+          generateBtn.disabled = false;
+
+          var numRows = cells.length;
+          gridStatus.textContent = '24 cols x ' + numRows + ' rows. Auto-threshold: ' + autoThresh;
+          gridStatus.style.color = '#27ae60';
+        } catch (err) {
+          gridStatus.textContent = 'Error: ' + err.message + '. Try adjusting the crop.';
+          gridStatus.style.color = 'var(--error)';
+        }
+      });
+    });
+
+    // === PREVIEW ===
+    function renderPreview(grid) {
+      previewGrid.innerHTML = '';
+      if (grid.length === 0) {
+        rowCount.textContent = '';
+        previewHint.style.display = 'none';
+        return;
+      }
+      previewHint.style.display = 'block';
+
+      // Lead-in rows (2 fully punched)
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 24; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell punched lead';
+          previewGrid.appendChild(cell);
+        }
+      }
+
+      // Data rows
+      for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < 24; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell editable' + (grid[r][c] === 'x' ? ' punched' : '');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          previewGrid.appendChild(cell);
+        }
+      }
+
+      // Lead-out rows (2 fully punched)
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 24; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell punched lead';
+          previewGrid.appendChild(cell);
+        }
+      }
+
+      const total = grid.length + 4;
+      rowCount.textContent = grid.length + ' data rows + 4 lead rows = ' + total + ' total rows';
+    }
+
+    // === PREVIEW EDITING ===
+    previewGrid.addEventListener('click', (e) => {
+      const cell = e.target;
+      if (!cell.classList.contains('editable')) return;
+
+      const row = parseInt(cell.dataset.row);
+      const col = parseInt(cell.dataset.col);
+
+      const line = currentGrid[row];
+      const newChar = line[col] === 'x' ? '-' : 'x';
+      currentGrid[row] = line.substring(0, col) + newChar + line.substring(col + 1);
+
+      cell.classList.toggle('punched');
+
+      if (currentMode === 'text') {
+        textInput.value = currentGrid.join('\n');
+      }
+
+      generatedSVGString = null;
+      svgOutput.innerHTML = '';
+      downloadBtn.disabled = true;
+    });
+
+    // === SVG GENERATION ===
+    function buildPolygonPoints(h) {
+      return [
+        '3.0,0', '139.0,0',
+        '140.0,1', '140.0,20', '142.0,22',
+        '142.0,' + fmtNum(h - 22),
+        '140.0,' + fmtNum(h - 20),
+        '140.0,' + fmtNum(h - 1),
+        '139.0,' + fmtNum(h),
+        '3.0,' + fmtNum(h),
+        '2.0,' + fmtNum(h - 1),
+        '2.0,' + fmtNum(h - 20),
+        '0,' + fmtNum(h - 22),
+        '0,22', '2.0,20', '2.0,1'
+      ].join(' ');
+    }
+
+    function fmtNum(n) {
+      // Format number: use integer if whole, otherwise preserve exact decimal
+      if (Number.isInteger(n)) return n.toFixed(1);
+      return String(n);
+    }
+
+    function circle(cx, cy, r) {
+      return '<circle cx="' + fmtNum(cx) + '" cy="' + fmtNum(cy) +
+        '" fill="white" r="' + fmtNum(r) + '" stroke="black" stroke-width="' + STROKE_W + '" />';
+    }
+
+    function generateSVG(grid) {
+      const dataRows = grid.length;
+      const totalRows = dataRows + 4;
+      const h = totalRows * 5.0;
+      const parts = [];
+
+      parts.push('<?xml version="1.0" encoding="UTF-8" standalone="no"?>');
+      parts.push('<svg baseProfile="full" height="' + fmtNum(h) + 'mm" preserveAspectRatio="none" version="1.1" viewBox="0 0 ' + fmtNum(CARD_WIDTH) + ' ' + fmtNum(h) + '" width="' + fmtNum(CARD_WIDTH) + 'mm" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">');
+      parts.push('<defs />');
+
+      // Polygon outline
+      parts.push('<polygon fill="white" points="' + buildPolygonPoints(h) + '" stroke="black" stroke-width="' + STROKE_W + '" />');
+
+      // Interleave pattern rows and transport rows in y-order
+      for (let i = 0; i < totalRows; i++) {
+        const patternY = 2.5 + i * 5.0;
+
+        // Left edge guide
+        parts.push(circle(EDGE_GUIDE_X[0], patternY, EDGE_R));
+
+        // Pattern holes
+        const isFullRow = (i < 2) || (i >= totalRows - 2);
+        for (let c = 0; c < 24; c++) {
+          let punched;
+          if (isFullRow) {
+            punched = true;
+          } else {
+            punched = grid[i - 2][c] === 'x';
+          }
+          if (punched) {
+            parts.push(circle(PATTERN_COLS[c], patternY, PATTERN_R));
+          }
+        }
+
+        // Right edge guide
+        parts.push(circle(EDGE_GUIDE_X[1], patternY, EDGE_R));
+
+        // Transport row (between this pattern row and the next)
+        if (i < totalRows - 1) {
+          const transportY = 5.0 + i * 5.0;
+          for (const tx of TRANSPORT_X) {
+            parts.push(circle(tx, transportY, TRANSPORT_R));
+          }
+        }
+      }
+
+      parts.push('</svg>');
+      return parts.join('');
+    }
+
+    // === ACTIONS ===
+    function expandJacquard(grid) {
+      var result = [];
+      for (var i = 0; i < grid.length; i++) {
+        result.push(grid[i]);
+        var inv = '';
+        for (var c = 0; c < grid[i].length; c++) {
+          inv += grid[i][c] === 'x' ? '-' : 'x';
+        }
+        result.push(inv);
+      }
+      return result;
+    }
+
+    generateBtn.addEventListener('click', () => {
+      if (currentGrid.length === 0) return;
+      var grid = jacquardToggle.checked ? expandJacquard(currentGrid) : currentGrid;
+      generatedSVGString = generateSVG(grid);
+      // Show inline (strip the XML declaration for innerHTML)
+      const displaySVG = generatedSVGString.replace(/<\?xml[^?]*\?>/, '');
+      svgOutput.innerHTML = displaySVG;
+      downloadBtn.disabled = false;
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!generatedSVGString) return;
+      const blob = new Blob([generatedSVGString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'punchcard-' + Date.now() + '.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // === PWA ===
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => console.log('SW registered:', reg.scope))
+        .catch((err) => console.log('SW registration failed:', err));
+    }
+  </script>
+</body>
+</html>
