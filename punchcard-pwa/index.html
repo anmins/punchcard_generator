@@ -9,19 +9,27 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>Punch Card Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #2c3e50;
-      --accent: #3498db;
-      --bg: #f5f5f5;
+      --primary: #27200f;
+      --accent: #5b8597;
+      --accent-hover: #7fafc1;
+      --bg: #FEF8EF;
       --card-bg: #ffffff;
-      --error: #e74c3c;
-      --radius: 8px;
+      --error: #c0392b;
+      --muted: #7e6e5e;
+      --lavender: #896e8d;
+      --lilac: #ab96af;
+      --copper: #af8662;
+      --radius: 10px;
       --max-width: 600px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
       color: var(--primary);
       padding: 16px;
@@ -30,6 +38,8 @@
     }
     h1 {
       font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       text-align: center;
       margin-bottom: 16px;
     }
@@ -42,33 +52,42 @@
     }
     .mode-toggle button {
       flex: 1;
-      padding: 12px;
+      padding: 12px 6px;
       border: none;
       background: var(--card-bg);
       color: var(--primary);
-      font-size: 1rem;
-      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
+      transition: background 0.15s, color 0.15s;
     }
     .mode-toggle button.active {
       background: var(--primary);
-      color: #fff;
+      color: var(--bg);
     }
     section {
       background: var(--card-bg);
       padding: 16px;
       border-radius: var(--radius);
       margin-bottom: 16px;
+      border: 1px solid rgba(126,110,94,0.1);
+      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
     }
     textarea {
       width: 100%;
       font-family: 'Courier New', monospace;
       font-size: 14px;
       padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
       resize: vertical;
       min-height: 200px;
+      background: #fff;
+    }
+    textarea:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
     }
     .error {
       color: var(--error);
@@ -80,9 +99,39 @@
       display: block;
       margin-bottom: 8px;
       font-size: 0.95rem;
+      font-weight: 500;
     }
     input[type="file"] {
+      display: none;
+    }
+    .file-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      border: 2px solid var(--copper);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
       margin-bottom: 12px;
+    }
+    .file-btn:hover {
+      background: var(--copper);
+      color: #fff;
+      border-color: var(--copper);
+    }
+    .file-btn:active {
+      background: var(--primary);
+      color: var(--bg);
+      border-color: var(--primary);
+    }
+    .file-name {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-left: 8px;
     }
     .slider-row {
       display: flex;
@@ -92,11 +141,13 @@
     }
     .slider-row input[type="range"] {
       flex: 1;
+      accent-color: var(--accent);
     }
     .slider-row span {
       min-width: 32px;
       text-align: right;
       font-variant-numeric: tabular-nums;
+      color: var(--muted);
     }
     .checkbox-row {
       margin-bottom: 12px;
@@ -107,15 +158,21 @@
       gap: 6px;
       cursor: pointer;
     }
+    .checkbox-row input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
     #imageControls { display: none; }
     #previewContainer {
       background: var(--card-bg);
       padding: 16px;
       border-radius: var(--radius);
       margin-bottom: 16px;
+      border: 1px solid rgba(126,110,94,0.1);
+      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
     }
     #previewContainer h2 {
       font-size: 1rem;
+      font-weight: 700;
       margin-bottom: 8px;
     }
     #previewGrid {
@@ -127,26 +184,26 @@
     }
     .cell {
       aspect-ratio: 1;
-      background: #eee;
-      border-radius: 1px;
+      background: #e8ddd0;
+      border-radius: 2px;
     }
     .cell.punched {
       background: var(--primary);
     }
     .cell.lead {
-      background: #7f8c8d;
+      background: var(--lilac);
     }
     .cell.editable {
       cursor: pointer;
     }
     .cell.editable:hover {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--lavender);
       outline-offset: -2px;
       z-index: 1;
     }
     #rowCount {
       font-size: 0.85rem;
-      color: #666;
+      color: var(--muted);
     }
     .actions {
       display: flex;
@@ -158,25 +215,33 @@
       padding: 14px;
       border: none;
       border-radius: var(--radius);
+      font-family: inherit;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
       min-height: 44px;
+      transition: background 0.15s;
     }
     #generateBtn {
       background: var(--accent);
       color: #fff;
     }
+    #generateBtn:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
     #generateBtn:disabled {
-      background: #bdc3c7;
+      background: #c4b8a8;
       cursor: not-allowed;
     }
     #downloadBtn {
       background: var(--primary);
-      color: #fff;
+      color: var(--bg);
+    }
+    #downloadBtn:hover:not(:disabled) {
+      background: #3d3422;
     }
     #downloadBtn:disabled {
-      background: #bdc3c7;
+      background: #c4b8a8;
       cursor: not-allowed;
     }
     #svgOutput {
@@ -185,6 +250,8 @@
       padding: 16px;
       overflow-x: auto;
       text-align: center;
+      border: 1px solid rgba(126,110,94,0.1);
+      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
     }
     #svgOutput svg {
       max-width: 100%;
@@ -196,21 +263,23 @@
       border: 2px solid var(--primary);
       background: var(--card-bg);
       color: var(--primary);
+      font-family: inherit;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
       border-radius: var(--radius);
+      transition: background 0.15s, color 0.15s;
     }
     .img-mode-btn.active {
       background: var(--primary);
-      color: #fff;
+      color: var(--bg);
     }
     #simplePreviewContainer {
       margin-bottom: 12px;
       max-width: 100%;
       overflow: hidden;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
     }
     #simplePreviewContainer img {
       display: block;
@@ -224,8 +293,8 @@
       user-select: none;
       max-width: 100%;
       overflow: hidden;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
     }
     #cropContainer canvas {
       display: block;
@@ -236,29 +305,41 @@
     .header-row {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       margin-bottom: 16px;
-      position: relative;
+      gap: 8px;
     }
     .header-row h1 {
       margin-bottom: 0;
+      min-width: 0;
     }
     #refreshAllBtn {
-      position: absolute;
-      right: 0;
+      flex-shrink: 0;
       background: none;
-      border: 2px solid var(--primary);
+      border: 2px solid var(--muted);
       border-radius: var(--radius);
-      color: var(--primary);
+      color: var(--muted);
+      font-family: inherit;
       font-size: 0.85rem;
       font-weight: 600;
       padding: 6px 12px;
       cursor: pointer;
       min-height: 36px;
+      transition: background 0.15s, color 0.15s;
+    }
+    #refreshAllBtn:hover {
+      background: var(--muted);
+      color: var(--bg);
     }
     #refreshAllBtn:active {
       background: var(--primary);
-      color: #fff;
+      color: var(--bg);
+    }
+    input[type="number"] {
+      font-family: inherit;
+    }
+    button {
+      font-family: inherit;
     }
   </style>
 </head>
@@ -277,53 +358,55 @@
   <section id="textSection" class="hidden">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <label for="txtFileInput" style="margin:0;white-space:nowrap">Load .txt file:</label>
+      <span class="file-btn" id="txtFileBtn">Choose File</span><span class="file-name" id="txtFileName"></span>
       <input type="file" id="txtFileInput" accept=".txt,text/plain">
     </div>
     <textarea id="textInput" placeholder="Enter pattern (24 chars per line)&#10;x = punch, - = blank&#10;&#10;Example:&#10;xx--xx--xx--xx--xx--xx--&#10;--xx--xx--xx--xx--xx--xx"></textarea>
     <div id="textError" class="error"></div>
-    <p style="font-size:0.8rem;color:#888;margin-top:8px">Each line must be exactly 24 characters. Use <strong>x</strong> for a punched hole and <strong>-</strong> for blank. You can also load a .txt file above.</p>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Each line must be exactly 24 characters. Use <strong>x</strong> for a punched hole and <strong>-</strong> for blank. You can also load a .txt file above.</p>
   </section>
 
   <section id="blankSection" class="hidden">
     <div style="display:flex;align-items:center;gap:8px">
       <label for="blankRows" style="margin:0;white-space:nowrap">Number of rows:</label>
-      <input type="number" id="blankRows" min="1" max="200" value="20" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:1rem">
-      <button id="createBlankBtn" style="padding:8px 16px;border:none;border-radius:4px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer">Create</button>
+      <input type="number" id="blankRows" min="1" max="200" value="20" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
+      <button id="createBlankBtn" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit">Create</button>
     </div>
-    <p style="font-size:0.8rem;color:#888;margin-top:8px">Creates an empty card with the specified number of rows. You can then click individual cells in the preview below to design your pattern.</p>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Creates an empty card with the specified number of rows. You can then click individual cells in the preview below to design your pattern.</p>
   </section>
 
   <section id="imageSection">
     <label>Upload an image to convert to a punch pattern:</label>
+    <span class="file-btn" id="imageInputBtn">Choose Image</span><span class="file-name" id="imageFileName"></span>
     <input type="file" id="imageInput" accept="image/*">
     <canvas id="hiddenCanvas" style="display:none"></canvas>
     <canvas id="analysisCanvas" style="display:none"></canvas>
-    <div id="imageModeToggle" class="hidden" style="display:flex;gap:8px;margin-bottom:4px">
+    <div id="imageModeToggle" class="hidden" style="gap:8px;margin-bottom:4px">
       <button id="simpleModeBtn" class="img-mode-btn active">Simple</button>
       <button id="chartScanBtn" class="img-mode-btn">Chart Scan</button>
     </div>
-    <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:#888;margin-bottom:12px"><strong>Simple</strong> converts any image to a 24-pixel-wide pattern. <strong>Chart Scan</strong> is for photos of existing punch card charts — it detects the grid and reads filled/empty cells.</p>
+    <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:var(--muted);margin-bottom:12px"><strong>Simple</strong> converts any image to a 24-pixel-wide pattern. <strong>Chart Scan</strong> is for photos of existing punch card charts — it detects the grid and reads filled/empty cells.</p>
     <div id="simplePreviewContainer" class="hidden">
       <img id="simplePreviewImg" alt="Uploaded image">
     </div>
     <div id="cropContainer" class="hidden">
-      <p style="font-size:0.8rem;color:#888;margin-bottom:6px">Drag the handles or edges to crop to just the chart area. You can also drag inside the box to reposition it.</p>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Drag the handles or edges to crop to just the chart area. You can also drag inside the box to reposition it.</p>
       <canvas id="cropCanvas"></canvas>
     </div>
     <div id="chartScanControls" class="hidden">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <label for="chartRows" style="margin:0;white-space:nowrap">Rows in image:</label>
-        <input type="number" id="chartRows" min="1" max="200" placeholder="e.g. 40" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:1rem" required>
-        <span style="font-size:0.8rem;color:#666">(required)</span>
+        <input type="number" id="chartRows" min="1" max="200" placeholder="e.g. 40" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem" required>
+        <span style="font-size:0.8rem;color:var(--muted)">(required)</span>
       </div>
       <div class="slider-row">
         <label for="sampleSlider" style="margin:0;white-space:nowrap">Sample region:</label>
         <input type="range" id="sampleSlider" min="20" max="70" value="40">
         <span id="sampleValue">40%</span>
       </div>
-      <p style="font-size:0.75rem;color:#999;margin:-4px 0 8px">How much of each cell's center area to sample for darkness. Lower values focus on the very center (ignoring grid lines); raise if marks are being missed.</p>
-      <button id="detectGridBtn" style="width:100%;padding:10px;border:none;border-radius:4px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:8px">Detect Grid &amp; Process</button>
-      <div id="gridStatus" style="font-size:0.85rem;color:#666;margin-bottom:8px"></div>
+      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">How much of each cell's center area to sample for darkness. Lower values focus on the very center (ignoring grid lines); raise if marks are being missed.</p>
+      <button id="detectGridBtn" style="width:100%;padding:10px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:8px;font-family:inherit">Detect Grid &amp; Process</button>
+      <div id="gridStatus" style="font-size:0.85rem;color:var(--muted);margin-bottom:8px"></div>
     </div>
     <div id="imageControls">
       <div class="slider-row">
@@ -331,24 +414,54 @@
         <input type="range" id="thresholdSlider" min="0" max="255" value="128">
         <span id="thresholdValue">128</span>
       </div>
-      <p style="font-size:0.75rem;color:#999;margin:-4px 0 4px">Cells darker than this value are marked as punched. 128 = 50% grey. Lower values require darker cells to count as filled; raise if scanned pages have grey backgrounds.</p>
+      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 4px">Cells darker than this value are marked as punched. 128 = 50% grey. Lower values require darker cells to count as filled; raise if scanned pages have grey backgrounds.</p>
       <div class="checkbox-row">
         <label><input type="checkbox" id="invertToggle"> Invert (light = punch)</label>
       </div>
-      <p style="font-size:0.75rem;color:#999;margin:-4px 0 8px">Check this if your chart uses light/white marks for punched holes on a dark background.</p>
+      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">Check this if your chart uses light/white marks for punched holes on a dark background.</p>
     </div>
   </section>
 
   <div id="previewContainer">
     <h2>Pattern Preview</h2>
-    <p id="previewHint" style="font-size:0.8rem;color:#888;margin-bottom:8px;display:none">Click any cell to toggle it between punched (dark) and blank. The grey rows at top and bottom are lead-in/lead-out rows and cannot be edited.</p>
+    <p id="previewHint" style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;display:none">Click any cell to toggle it between punched (dark) and blank. The grey rows at top and bottom are lead-in/lead-out rows and cannot be edited.</p>
     <div id="previewGrid"></div>
     <div id="rowCount"></div>
   </div>
 
-  <div class="checkbox-row" style="margin-bottom:12px">
-    <label><input type="checkbox" id="jacquardToggle"> Double Bed Jacquard (each row becomes two: original + inverse)</label>
-  </div>
+  <section id="outputOptionsSection">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:12px">Output Options</h2>
+
+    <div class="checkbox-row" style="margin-bottom:12px">
+      <label><input type="checkbox" id="jacquardToggle"> Double Bed Jacquard (each row becomes two: original + inverse)</label>
+    </div>
+
+    <hr style="border:none;border-top:1px solid rgba(126,110,94,0.15);margin-bottom:12px">
+
+    <label style="margin-bottom:6px">Machine Type (row offset)</label>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:10px">Shifts the top rows to the bottom so your pattern lines up correctly for your machine.</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
+        <input type="radio" name="machineOffset" value="0" checked style="accent-color:var(--accent)"> No shift
+      </label>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
+        <input type="radio" name="machineOffset" value="5" style="accent-color:var(--accent)"> Singer / Silver Reed (shift 5 rows)
+      </label>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
+        <input type="radio" name="machineOffset" value="7" style="accent-color:var(--accent)"> Brother (shift 7 rows)
+      </label>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
+        <input type="radio" name="machineOffset" value="9" style="accent-color:var(--accent)"> Toyota (shift 9 rows)
+      </label>
+    </div>
+
+    <hr style="border:none;border-top:1px solid rgba(126,110,94,0.15);margin-bottom:12px">
+
+    <div style="display:flex;align-items:center;gap:8px">
+      <label for="repeatCount" style="margin:0;white-space:nowrap">Pattern repeats:</label>
+      <input type="number" id="repeatCount" min="1" max="50" value="1" style="width:60px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
+    </div>
+  </section>
 
   <div class="actions">
     <button id="generateBtn" disabled>Generate SVG</button>
@@ -428,6 +541,16 @@
     const jacquardToggle = document.getElementById('jacquardToggle');
     const refreshAllBtn = document.getElementById('refreshAllBtn');
 
+    // === CUSTOM FILE BUTTONS ===
+    document.getElementById('imageInputBtn').addEventListener('click', () => imageInput.click());
+    document.getElementById('txtFileBtn').addEventListener('click', () => txtFileInput.click());
+    imageInput.addEventListener('change', function() {
+      document.getElementById('imageFileName').textContent = this.files[0] ? this.files[0].name : '';
+    });
+    txtFileInput.addEventListener('change', function() {
+      document.getElementById('txtFileName').textContent = this.files[0] ? this.files[0].name : '';
+    });
+
     // === REFRESH ALL ===
     refreshAllBtn.addEventListener('click', () => {
       // Reset state
@@ -449,11 +572,14 @@
 
       // Reset image input
       imageInput.value = '';
+      document.getElementById('imageFileName').textContent = '';
+      document.getElementById('txtFileName').textContent = '';
       imageControls.style.display = 'none';
       simplePreviewContainer.classList.add('hidden');
-      cropContainer.style.display = 'none';
-      chartScanControls.style.display = 'none';
-      imageModeHint && (imageModeHint.style.display = '');
+      cropContainer.classList.add('hidden');
+      cropContainer.style.display = '';
+      chartScanControls.classList.add('hidden');
+      chartScanControls.style.display = '';
       thresholdSlider.value = 128;
       thresholdValue.textContent = '128';
       invertToggle.checked = false;
@@ -462,8 +588,21 @@
       chartRowsInput.value = '';
       gridStatus.textContent = '';
 
-      // Reset jacquard and blank card
+      // Reset image mode toggle and sub-mode buttons
+      imageModeToggle.classList.add('hidden');
+      imageModeToggle.style.display = '';
+      imageModeHint.classList.add('hidden');
+      imageModeHint.style.display = '';
+      simpleModeBtn.classList.add('active');
+      chartScanBtn.classList.remove('active');
+
+      // Clear crop canvas
+      cropCanvas.getContext('2d').clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+
+      // Reset jacquard, machine offset, repeats, and blank card
       jacquardToggle.checked = false;
+      document.querySelector('input[name="machineOffset"][value="0"]').checked = true;
+      document.getElementById('repeatCount').value = 1;
       blankRows.value = 20;
 
       // Reset preview and output
@@ -1194,7 +1333,7 @@
       }
 
       gridStatus.textContent = 'Analyzing image...';
-      gridStatus.style.color = '#666';
+      gridStatus.style.color = 'var(--muted)';
       requestAnimationFrame(function() {
         try {
           var imgData = getCroppedImageData();
@@ -1233,7 +1372,7 @@
 
           var numRows = cells.length;
           gridStatus.textContent = '24 cols x ' + numRows + ' rows. Auto-threshold: ' + autoThresh;
-          gridStatus.style.color = '#27ae60';
+          gridStatus.style.color = 'var(--accent)';
         } catch (err) {
           gridStatus.textContent = 'Error: ' + err.message + '. Try adjusting the crop.';
           gridStatus.style.color = 'var(--error)';
@@ -1399,9 +1538,33 @@
       return result;
     }
 
+    function getMachineOffset() {
+      const selected = document.querySelector('input[name="machineOffset"]:checked');
+      return selected ? parseInt(selected.value) : 0;
+    }
+
+    function shiftGridForMachine(grid, offset) {
+      if (offset <= 0 || grid.length === 0) return grid;
+      const shift = offset % grid.length;
+      if (shift === 0) return grid;
+      return grid.slice(shift).concat(grid.slice(0, shift));
+    }
+
+    function repeatGrid(grid, times) {
+      if (times <= 1) return grid;
+      var result = [];
+      for (var i = 0; i < times; i++) {
+        result = result.concat(grid);
+      }
+      return result;
+    }
+
     generateBtn.addEventListener('click', () => {
       if (currentGrid.length === 0) return;
+      var repeats = Math.max(1, Math.min(50, parseInt(document.getElementById('repeatCount').value) || 1));
       var grid = jacquardToggle.checked ? expandJacquard(currentGrid) : currentGrid;
+      grid = repeatGrid(grid, repeats);
+      grid = shiftGridForMachine(grid, getMachineOffset());
       generatedSVGString = generateSVG(grid);
       // Show inline (strip the XML declaration for innerHTML)
       const displaySVG = generatedSVGString.replace(/<\?xml[^?]*\?>/, '');
