@@ -186,9 +186,27 @@
       aspect-ratio: 1;
       background: #e8ddd0;
       border-radius: 2px;
+      position: relative;
     }
     .cell.punched {
       background: var(--primary);
+    }
+    .cell .col-num {
+      display: none;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      text-align: center;
+      pointer-events: none;
+      width: 100%;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+    }
+    .show-col-nums .cell.punched .col-num {
+      display: block;
     }
     .cell.lead {
       background: var(--lilac);
@@ -301,6 +319,17 @@
       width: 100%;
       height: auto;
     }
+    #simplePreviewContainer {
+      position: relative;
+    }
+    #simpleGridOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
     .hidden { display: none !important; }
     .header-row {
       display: flex;
@@ -388,6 +417,7 @@
     <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:var(--muted);margin-bottom:12px"><strong>Simple</strong> converts any image to a 24-pixel-wide pattern. <strong>Chart Scan</strong> is for photos of existing punch card charts — it detects the grid and reads filled/empty cells.</p>
     <div id="simplePreviewContainer" class="hidden">
       <img id="simplePreviewImg" alt="Uploaded image">
+      <canvas id="simpleGridOverlay"></canvas>
     </div>
     <div id="cropContainer" class="hidden">
       <p style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Drag the handles or edges to crop to just the chart area. You can also drag inside the box to reposition it.</p>
@@ -420,11 +450,17 @@
       </div>
       <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">Check this if your chart uses light/white marks for punched holes on a dark background.</p>
     </div>
+    <div class="checkbox-row" id="gridOverlayToggleRow" style="margin-bottom:8px;display:none">
+      <label><input type="checkbox" id="gridOverlayToggle"> Show grid overlay on source image</label>
+    </div>
   </section>
 
   <div id="previewContainer">
     <h2>Pattern Preview</h2>
     <p id="previewHint" style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;display:none">Click any cell to toggle it between punched (dark) and blank. The grey rows at top and bottom are lead-in/lead-out rows and cannot be edited.</p>
+    <div class="checkbox-row" id="colNumToggleRow" style="margin-bottom:8px;display:none">
+      <label><input type="checkbox" id="colNumToggle"> Show column numbers on punched cells</label>
+    </div>
     <div id="previewGrid"></div>
     <div id="rowCount"></div>
   </div>
@@ -498,6 +534,7 @@
     let cropDragState = null;
     let detectedCells = null;
     let chartScanImageData = null;
+    let gridOverlayInfo = null; // { img, cols, rows, cropRect? }
 
     // === DOM REFS ===
     const textModeBtn = document.getElementById('textModeBtn');
@@ -599,10 +636,16 @@
       // Clear crop canvas
       cropCanvas.getContext('2d').clearRect(0, 0, cropCanvas.width, cropCanvas.height);
 
-      // Reset jacquard, machine offset, repeats, and blank card
+      // Reset jacquard, machine offset, repeats, column numbers, grid overlay, and blank card
       jacquardToggle.checked = false;
       document.querySelector('input[name="machineOffset"][value="0"]').checked = true;
       document.getElementById('repeatCount').value = 1;
+      document.getElementById('colNumToggle').checked = false;
+      document.getElementById('colNumToggleRow').style.display = 'none';
+      previewGrid.classList.remove('show-col-nums');
+      document.getElementById('gridOverlayToggle').checked = false;
+      document.getElementById('gridOverlayToggleRow').style.display = 'none';
+      gridOverlayInfo = null;
       blankRows.value = 20;
 
       // Reset preview and output
@@ -796,6 +839,9 @@
       cropRect = { x: 0, y: 0, w: 1, h: 1 };
       detectedCells = null;
       chartScanImageData = null;
+      gridOverlayInfo = null;
+      gridOverlayToggle.checked = false;
+      gridOverlayToggleRow.style.display = 'none';
       drawCrop();
     }
 
@@ -872,7 +918,98 @@
       currentGrid = grid;
       renderPreview(grid);
       generateBtn.disabled = false;
+
+      // Update grid overlay for simple mode
+      if (imageProcessingMode === 'simple' && sourceImage) {
+        gridOverlayInfo = { img: sourceImage, cols: 24, rows: imageHeight, cropRect: null };
+        document.getElementById('gridOverlayToggleRow').style.display = '';
+        drawGridOverlay();
+      }
     }
+
+    // === GRID OVERLAY ===
+    var simpleGridOverlay = document.getElementById('simpleGridOverlay');
+    var gridOverlayToggle = document.getElementById('gridOverlayToggle');
+    var gridOverlayToggleRow = document.getElementById('gridOverlayToggleRow');
+
+    function drawGridLines(ctx, x0, y0, w, h, cols, rows) {
+      ctx.strokeStyle = 'rgba(255, 80, 80, 0.6)';
+      ctx.lineWidth = 1;
+      var colStep = w / cols;
+      var rowStep = h / rows;
+
+      for (var c = 0; c <= cols; c++) {
+        var x = Math.round(x0 + c * colStep) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x, y0);
+        ctx.lineTo(x, y0 + h);
+        ctx.stroke();
+      }
+      for (var r = 0; r <= rows; r++) {
+        var y = Math.round(y0 + r * rowStep) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.lineTo(x0 + w, y);
+        ctx.stroke();
+      }
+
+      // Column numbers along top
+      var fontSize = Math.max(9, Math.min(14, Math.floor(colStep * 0.6)));
+      ctx.font = 'bold ' + fontSize + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (var c = 0; c < cols; c++) {
+        var cx = x0 + (c + 0.5) * colStep;
+        var ty = y0 + 2;
+        var text = String(c + 1);
+        var tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(cx - tw / 2 - 2, ty, tw + 4, fontSize + 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(text, cx, ty + 1);
+      }
+
+      // Row numbers along left
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      var rowFontSize = Math.max(8, Math.min(13, Math.floor(rowStep * 0.55)));
+      ctx.font = 'bold ' + rowFontSize + 'px sans-serif';
+      for (var r = 0; r < rows; r++) {
+        var cy = y0 + (r + 0.5) * rowStep;
+        var text = String(r + 1);
+        var tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(x0 + 1, cy - rowFontSize / 2 - 1, tw + 4, rowFontSize + 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(text, x0 + 3, cy);
+      }
+    }
+
+    function drawSimpleGridOverlay() {
+      if (!gridOverlayInfo || !gridOverlayToggle.checked || imageProcessingMode !== 'simple') {
+        simpleGridOverlay.width = 0;
+        simpleGridOverlay.height = 0;
+        return;
+      }
+      var img = simplePreviewImg;
+      var w = img.naturalWidth;
+      var h = img.naturalHeight;
+      if (!w || !h) return;
+      simpleGridOverlay.width = w;
+      simpleGridOverlay.height = h;
+      var ctx = simpleGridOverlay.getContext('2d');
+      drawGridLines(ctx, 0, 0, w, h, gridOverlayInfo.cols, gridOverlayInfo.rows);
+    }
+
+    function drawGridOverlay() {
+      if (imageProcessingMode === 'simple') {
+        drawSimpleGridOverlay();
+      } else if (imageProcessingMode === 'chartScan') {
+        drawCrop();
+      }
+    }
+
+    gridOverlayToggle.addEventListener('change', drawGridOverlay);
 
     // === CROP UI ===
     function drawCrop() {
@@ -898,18 +1035,34 @@
       ctx.fillRect(0, cy + ch, displayW, displayH - cy - ch);
       ctx.fillRect(0, cy, cx, ch);
       ctx.fillRect(cx + cw, cy, displayW - cx - cw, ch);
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = '#ff6b9d';
       ctx.lineWidth = 2;
       ctx.strokeRect(cx, cy, cw, ch);
-      const hs = 10;
-      ctx.fillStyle = '#fff';
+      const hs = 12;
       var handles = [
         [cx, cy], [cx + cw, cy], [cx, cy + ch], [cx + cw, cy + ch],
         [cx + cw / 2, cy], [cx + cw / 2, cy + ch],
         [cx, cy + ch / 2], [cx + cw, cy + ch / 2]
       ];
       for (var hi = 0; hi < handles.length; hi++) {
-        ctx.fillRect(handles[hi][0] - hs / 2, handles[hi][1] - hs / 2, hs, hs);
+        // Clamp handle position so it stays inside the visible canvas area
+        var hx = Math.max(0, Math.min(displayW - hs, handles[hi][0] - hs / 2));
+        var hy = Math.max(0, Math.min(displayH - hs, handles[hi][1] - hs / 2));
+        ctx.fillStyle = '#ff6b9d';
+        ctx.fillRect(hx, hy, hs, hs);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hx, hy, hs, hs);
+      }
+
+      // Draw grid overlay inside crop region if enabled
+      if (gridOverlayInfo && gridOverlayToggle.checked && imageProcessingMode === 'chartScan') {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx, cy, cw, ch);
+        ctx.clip();
+        drawGridLines(ctx, cx, cy, cw, ch, gridOverlayInfo.cols, gridOverlayInfo.rows);
+        ctx.restore();
       }
     }
 
@@ -1373,6 +1526,11 @@
           var numRows = cells.length;
           gridStatus.textContent = '24 cols x ' + numRows + ' rows. Auto-threshold: ' + autoThresh;
           gridStatus.style.color = 'var(--accent)';
+
+          // Update grid overlay for chart scan mode
+          gridOverlayInfo = { img: sourceImage, cols: 24, rows: userRows, cropRect: { x: cropRect.x, y: cropRect.y, w: cropRect.w, h: cropRect.h } };
+          gridOverlayToggleRow.style.display = '';
+          drawGridOverlay();
         } catch (err) {
           gridStatus.textContent = 'Error: ' + err.message + '. Try adjusting the crop.';
           gridStatus.style.color = 'var(--error)';
@@ -1386,9 +1544,15 @@
       if (grid.length === 0) {
         rowCount.textContent = '';
         previewHint.style.display = 'none';
+        document.getElementById('colNumToggleRow').style.display = 'none';
         return;
       }
       previewHint.style.display = 'block';
+      document.getElementById('colNumToggleRow').style.display = '';
+
+      // Apply column number class based on toggle state
+      var showNums = document.getElementById('colNumToggle').checked;
+      previewGrid.classList.toggle('show-col-nums', showNums);
 
       // Lead-in rows (2 fully punched)
       for (let r = 0; r < 2; r++) {
@@ -1403,9 +1567,15 @@
       for (let r = 0; r < grid.length; r++) {
         for (let c = 0; c < 24; c++) {
           const cell = document.createElement('div');
-          cell.className = 'cell editable' + (grid[r][c] === 'x' ? ' punched' : '');
+          const isPunched = grid[r][c] === 'x';
+          cell.className = 'cell editable' + (isPunched ? ' punched' : '');
           cell.dataset.row = r;
           cell.dataset.col = c;
+          // Always add the column number span so toggling is instant
+          var numSpan = document.createElement('span');
+          numSpan.className = 'col-num';
+          numSpan.textContent = c + 1;
+          cell.appendChild(numSpan);
           previewGrid.appendChild(cell);
         }
       }
@@ -1423,9 +1593,15 @@
       rowCount.textContent = grid.length + ' data rows + 4 lead rows = ' + total + ' total rows';
     }
 
+    // === COLUMN NUMBER TOGGLE ===
+    document.getElementById('colNumToggle').addEventListener('change', function() {
+      previewGrid.classList.toggle('show-col-nums', this.checked);
+    });
+
     // === PREVIEW EDITING ===
     previewGrid.addEventListener('click', (e) => {
-      const cell = e.target;
+      var cell = e.target;
+      if (cell.classList.contains('col-num')) cell = cell.parentElement;
       if (!cell.classList.contains('editable')) return;
 
       const row = parseInt(cell.dataset.row);
