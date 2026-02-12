@@ -1469,12 +1469,12 @@
       return String(n);
     }
 
-    function circle(cx, cy, r) {
+    function circle(cx, cy, r, fill) {
       return '<circle cx="' + fmtNum(cx) + '" cy="' + fmtNum(cy) +
-        '" fill="white" r="' + fmtNum(r) + '" stroke="black" stroke-width="' + STROKE_W + '" />';
+        '" fill="' + (fill || 'white') + '" r="' + fmtNum(r) + '" stroke="black" stroke-width="' + STROKE_W + '" />';
     }
 
-    function generateSVG(grid) {
+    function generateSVG(grid, rowTypes) {
       const dataRows = grid.length;
       const totalRows = dataRows + 4;
       const h = totalRows * 5.0;
@@ -1496,6 +1496,11 @@
 
         // Pattern holes
         const isFullRow = (i < 2) || (i >= totalRows - 2);
+        // Determine fill color for this row's pattern holes
+        var holeFill = 'white';
+        if (!isFullRow && rowTypes && rowTypes[i - 2] === 'inverse') {
+          holeFill = '#ab96af'; // lilac for inverse rows
+        }
         for (let c = 0; c < 24; c++) {
           let punched;
           if (isFullRow) {
@@ -1504,7 +1509,7 @@
             punched = grid[i - 2][c] === 'x';
           }
           if (punched) {
-            parts.push(circle(PATTERN_COLS[c], patternY, PATTERN_R));
+            parts.push(circle(PATTERN_COLS[c], patternY, PATTERN_R, holeFill));
           }
         }
 
@@ -1527,15 +1532,32 @@
     // === ACTIONS ===
     function expandJacquard(grid) {
       var result = [];
-      for (var i = 0; i < grid.length; i++) {
+      var types = [];
+      for (var i = 0; i < grid.length; i += 2) {
+        // Push the pair of original rows
         result.push(grid[i]);
-        var inv = '';
-        for (var c = 0; c < grid[i].length; c++) {
-          inv += grid[i][c] === 'x' ? '-' : 'x';
+        types.push('original');
+        if (i + 1 < grid.length) {
+          result.push(grid[i + 1]);
+          types.push('original');
         }
-        result.push(inv);
+        // Push inverse of the pair
+        var inv1 = '';
+        for (var c = 0; c < grid[i].length; c++) {
+          inv1 += grid[i][c] === 'x' ? '-' : 'x';
+        }
+        result.push(inv1);
+        types.push('inverse');
+        if (i + 1 < grid.length) {
+          var inv2 = '';
+          for (var c = 0; c < grid[i + 1].length; c++) {
+            inv2 += grid[i + 1][c] === 'x' ? '-' : 'x';
+          }
+          result.push(inv2);
+          types.push('inverse');
+        }
       }
-      return result;
+      return { grid: result, types: types };
     }
 
     function getMachineOffset() {
@@ -1543,29 +1565,45 @@
       return selected ? parseInt(selected.value) : 0;
     }
 
-    function shiftGridForMachine(grid, offset) {
-      if (offset <= 0 || grid.length === 0) return grid;
+    function shiftGridForMachine(grid, offset, types) {
+      if (offset <= 0 || grid.length === 0) return { grid: grid, types: types };
       const shift = offset % grid.length;
-      if (shift === 0) return grid;
-      return grid.slice(shift).concat(grid.slice(0, shift));
+      if (shift === 0) return { grid: grid, types: types };
+      return {
+        grid: grid.slice(shift).concat(grid.slice(0, shift)),
+        types: types ? types.slice(shift).concat(types.slice(0, shift)) : null
+      };
     }
 
-    function repeatGrid(grid, times) {
-      if (times <= 1) return grid;
-      var result = [];
+    function repeatGrid(grid, times, types) {
+      if (times <= 1) return { grid: grid, types: types };
+      var resultGrid = [];
+      var resultTypes = types ? [] : null;
       for (var i = 0; i < times; i++) {
-        result = result.concat(grid);
+        resultGrid = resultGrid.concat(grid);
+        if (types) resultTypes = resultTypes.concat(types);
       }
-      return result;
+      return { grid: resultGrid, types: resultTypes };
     }
 
     generateBtn.addEventListener('click', () => {
       if (currentGrid.length === 0) return;
       var repeats = Math.max(1, Math.min(50, parseInt(document.getElementById('repeatCount').value) || 1));
-      var grid = jacquardToggle.checked ? expandJacquard(currentGrid) : currentGrid;
-      grid = repeatGrid(grid, repeats);
-      grid = shiftGridForMachine(grid, getMachineOffset());
-      generatedSVGString = generateSVG(grid);
+      var grid, rowTypes = null;
+      if (jacquardToggle.checked) {
+        var jq = expandJacquard(currentGrid);
+        grid = jq.grid;
+        rowTypes = jq.types;
+      } else {
+        grid = currentGrid;
+      }
+      var rp = repeatGrid(grid, repeats, rowTypes);
+      grid = rp.grid;
+      rowTypes = rp.types;
+      var sh = shiftGridForMachine(grid, getMachineOffset(), rowTypes);
+      grid = sh.grid;
+      rowTypes = sh.types;
+      generatedSVGString = generateSVG(grid, rowTypes);
       // Show inline (strip the XML declaration for innerHTML)
       const displaySVG = generatedSVGString.replace(/<\?xml[^?]*\?>/, '');
       svgOutput.innerHTML = displaySVG;
