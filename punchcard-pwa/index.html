@@ -219,6 +219,56 @@
       outline-offset: -2px;
       z-index: 1;
     }
+    .edit-rows {
+      grid-template-columns: auto repeat(24, 1fr) auto !important;
+    }
+    .row-gutter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: var(--muted);
+      min-width: 28px;
+      gap: 2px;
+      user-select: none;
+    }
+    .row-gutter.left {
+      justify-content: flex-end;
+      padding-right: 3px;
+    }
+    .row-gutter.right {
+      justify-content: flex-start;
+      padding-left: 3px;
+    }
+    .row-del-btn, .row-add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: none;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      font-family: inherit;
+    }
+    .row-del-btn {
+      background: var(--error);
+      color: #fff;
+    }
+    .row-del-btn:hover {
+      background: #c0392b;
+    }
+    .row-add-btn {
+      background: var(--accent);
+      color: #fff;
+    }
+    .row-add-btn:hover {
+      background: #5a8a5e;
+    }
     #rowCount {
       font-size: 0.85rem;
       color: var(--muted);
@@ -251,14 +301,24 @@
       background: #c4b8a8;
       cursor: not-allowed;
     }
-    #downloadBtn {
+    .dl-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 44px;
+      transition: background 0.15s;
       background: var(--primary);
       color: var(--bg);
     }
-    #downloadBtn:hover:not(:disabled) {
+    .dl-btn:hover:not(:disabled) {
       background: #3d3422;
     }
-    #downloadBtn:disabled {
+    .dl-btn:disabled {
       background: #c4b8a8;
       cursor: not-allowed;
     }
@@ -461,6 +521,9 @@
     <div class="checkbox-row" id="colNumToggleRow" style="margin-bottom:8px;display:none">
       <label><input type="checkbox" id="colNumToggle"> Show column numbers on punched cells</label>
     </div>
+    <div class="checkbox-row" id="editRowsToggleRow" style="margin-bottom:8px;display:none">
+      <label><input type="checkbox" id="editRowsToggle"> Edit rows (add / delete)</label>
+    </div>
     <div id="previewGrid"></div>
     <div id="rowCount"></div>
   </div>
@@ -497,11 +560,40 @@
       <label for="repeatCount" style="margin:0;white-space:nowrap">Pattern repeats:</label>
       <input type="number" id="repeatCount" min="1" max="50" value="1" style="width:60px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
     </div>
+
+    <hr style="border:none;border-top:1px solid rgba(126,110,94,0.15);margin:12px 0">
+
+    <label style="margin-bottom:6px">SVG Text Annotations</label>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:10px">Add text printed on the card. Row numbers count from bottom up. Text is in a separate draw layer for Cricut pen pass.</p>
+
+    <div class="checkbox-row" style="margin-bottom:10px">
+      <label><input type="checkbox" id="rowNumbersToggle"> Print row numbers</label>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <label for="cardTitleInput" style="margin:0;white-space:nowrap">Card title:</label>
+      <input type="text" id="cardTitleInput" placeholder="" maxlength="80" style="flex:1;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:0.9rem;font-family:inherit">
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <label for="fontPicker" style="margin:0;white-space:nowrap">Font:</label>
+      <select id="fontPicker" style="flex:1;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:0.9rem;font-family:inherit;background:#fff">
+        <option value="Verdana, Geneva, sans-serif" style="font-family:Verdana,Geneva,sans-serif">Verdana</option>
+        <option value="Arial, Helvetica, sans-serif" style="font-family:Arial,Helvetica,sans-serif">Arial</option>
+        <option value="'Times New Roman', Times, serif" style="font-family:'Times New Roman',Times,serif">Times New Roman</option>
+        <option value="'Courier New', Courier, monospace" style="font-family:'Courier New',Courier,monospace">Courier New</option>
+        <option value="Georgia, serif" style="font-family:Georgia,serif">Georgia</option>
+      </select>
+    </div>
   </section>
 
   <div class="actions">
     <button id="generateBtn" disabled>Generate SVG</button>
-    <button id="downloadBtn" disabled>Download SVG</button>
+  </div>
+  <div class="actions" id="downloadActions" style="display:none">
+    <button id="downloadCutBtn" class="dl-btn" disabled>Cut SVG</button>
+    <button id="downloadDrawBtn" class="dl-btn" disabled>Draw SVG</button>
+    <button id="downloadCombinedBtn" class="dl-btn" disabled>Combined SVG</button>
   </div>
 
   <div id="svgOutput"></div>
@@ -573,7 +665,10 @@
     const rowCount = document.getElementById('rowCount');
     const previewHint = document.getElementById('previewHint');
     const generateBtn = document.getElementById('generateBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadCutBtn = document.getElementById('downloadCutBtn');
+    const downloadDrawBtn = document.getElementById('downloadDrawBtn');
+    const downloadCombinedBtn = document.getElementById('downloadCombinedBtn');
+    const downloadActions = document.getElementById('downloadActions');
     const svgOutput = document.getElementById('svgOutput');
     const jacquardToggle = document.getElementById('jacquardToggle');
     const refreshAllBtn = document.getElementById('refreshAllBtn');
@@ -643,10 +738,16 @@
       document.getElementById('colNumToggle').checked = false;
       document.getElementById('colNumToggleRow').style.display = 'none';
       previewGrid.classList.remove('show-col-nums');
+      document.getElementById('editRowsToggle').checked = false;
+      document.getElementById('editRowsToggleRow').style.display = 'none';
+      previewGrid.classList.remove('edit-rows');
       document.getElementById('gridOverlayToggle').checked = false;
       document.getElementById('gridOverlayToggleRow').style.display = 'none';
       gridOverlayInfo = null;
       blankRows.value = 20;
+      document.getElementById('rowNumbersToggle').checked = false;
+      document.getElementById('cardTitleInput').value = '';
+      document.getElementById('fontPicker').selectedIndex = 0;
 
       // Reset preview and output
       previewGrid.innerHTML = '';
@@ -654,7 +755,7 @@
       previewHint.style.display = 'none';
       svgOutput.innerHTML = '';
       generateBtn.disabled = true;
-      downloadBtn.disabled = true;
+      downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
 
       // Reset to image mode
       setMode('image');
@@ -1545,26 +1646,61 @@
         rowCount.textContent = '';
         previewHint.style.display = 'none';
         document.getElementById('colNumToggleRow').style.display = 'none';
+        document.getElementById('editRowsToggleRow').style.display = 'none';
         return;
       }
       previewHint.style.display = 'block';
       document.getElementById('colNumToggleRow').style.display = '';
+      document.getElementById('editRowsToggleRow').style.display = '';
 
       // Apply column number class based on toggle state
       var showNums = document.getElementById('colNumToggle').checked;
       previewGrid.classList.toggle('show-col-nums', showNums);
 
+      var editRows = document.getElementById('editRowsToggle').checked;
+      previewGrid.classList.toggle('edit-rows', editRows);
+
+      function addGutters(type, rowIdx) {
+        if (!editRows) return;
+        if (type === 'lead') {
+          var gl = document.createElement('div');
+          gl.className = 'row-gutter left';
+          previewGrid.appendChild(gl);
+        } else {
+          var gl = document.createElement('div');
+          gl.className = 'row-gutter left';
+          gl.innerHTML = '<span>' + (rowIdx + 1) + '</span><button class="row-del-btn" data-del-row="' + rowIdx + '" title="Delete row ' + (rowIdx + 1) + '">\u00d7</button>';
+          previewGrid.appendChild(gl);
+        }
+        return function() {
+          if (!editRows) return;
+          if (type === 'lead') {
+            var gr = document.createElement('div');
+            gr.className = 'row-gutter right';
+            previewGrid.appendChild(gr);
+          } else {
+            var gr = document.createElement('div');
+            gr.className = 'row-gutter right';
+            gr.innerHTML = '<button class="row-add-btn" data-add-after="' + rowIdx + '" title="Add row after ' + (rowIdx + 1) + '">+</button>';
+            previewGrid.appendChild(gr);
+          }
+        };
+      }
+
       // Lead-in rows (2 fully punched)
       for (let r = 0; r < 2; r++) {
+        var addRight = addGutters('lead', r);
         for (let c = 0; c < 24; c++) {
           const cell = document.createElement('div');
           cell.className = 'cell punched lead';
           previewGrid.appendChild(cell);
         }
+        if (addRight) addRight();
       }
 
       // Data rows
       for (let r = 0; r < grid.length; r++) {
+        var addRight = addGutters('data', r);
         for (let c = 0; c < 24; c++) {
           const cell = document.createElement('div');
           const isPunched = grid[r][c] === 'x';
@@ -1578,15 +1714,18 @@
           cell.appendChild(numSpan);
           previewGrid.appendChild(cell);
         }
+        if (addRight) addRight();
       }
 
       // Lead-out rows (2 fully punched)
       for (let r = 0; r < 2; r++) {
+        var addRight = addGutters('lead', r);
         for (let c = 0; c < 24; c++) {
           const cell = document.createElement('div');
           cell.className = 'cell punched lead';
           previewGrid.appendChild(cell);
         }
+        if (addRight) addRight();
       }
 
       const total = grid.length + 4;
@@ -1596,6 +1735,38 @@
     // === COLUMN NUMBER TOGGLE ===
     document.getElementById('colNumToggle').addEventListener('change', function() {
       previewGrid.classList.toggle('show-col-nums', this.checked);
+    });
+
+    // === EDIT ROWS TOGGLE ===
+    document.getElementById('editRowsToggle').addEventListener('change', function() {
+      renderPreview(currentGrid);
+    });
+
+    // === ROW DELETE / ADD ===
+    previewGrid.addEventListener('click', function(e) {
+      var delBtn = e.target.closest('[data-del-row]');
+      if (delBtn) {
+        var row = parseInt(delBtn.dataset.delRow);
+        if (currentGrid.length <= 1) return; // keep at least 1 row
+        currentGrid.splice(row, 1);
+        renderPreview(currentGrid);
+        if (currentMode === 'text') textInput.value = currentGrid.join('\n');
+        generatedSVGString = null;
+        svgOutput.innerHTML = '';
+        downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
+        return;
+      }
+      var addBtn = e.target.closest('[data-add-after]');
+      if (addBtn) {
+        var afterRow = parseInt(addBtn.dataset.addAfter);
+        currentGrid.splice(afterRow + 1, 0, '------------------------');
+        renderPreview(currentGrid);
+        if (currentMode === 'text') textInput.value = currentGrid.join('\n');
+        generatedSVGString = null;
+        svgOutput.innerHTML = '';
+        downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
+        return;
+      }
     });
 
     // === PREVIEW EDITING ===
@@ -1619,23 +1790,23 @@
 
       generatedSVGString = null;
       svgOutput.innerHTML = '';
-      downloadBtn.disabled = true;
+      downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
     });
 
     // === SVG GENERATION ===
     function buildPolygonPoints(h) {
       return [
         '3.0,0', '139.0,0',
-        '140.0,1', '140.0,20', '142.0,22',
+        '140.0,1.7', '140.0,20', '142.0,22',
         '142.0,' + fmtNum(h - 22),
         '140.0,' + fmtNum(h - 20),
-        '140.0,' + fmtNum(h - 1),
+        '140.0,' + fmtNum(h - 1.7),
         '139.0,' + fmtNum(h),
         '3.0,' + fmtNum(h),
-        '2.0,' + fmtNum(h - 1),
+        '2.0,' + fmtNum(h - 1.7),
         '2.0,' + fmtNum(h - 20),
         '0,' + fmtNum(h - 22),
-        '0,22', '2.0,20', '2.0,1'
+        '0,22', '2.0,20', '2.0,1.7'
       ].join(' ');
     }
 
@@ -1650,15 +1821,33 @@
         '" fill="' + (fill || 'white') + '" r="' + fmtNum(r) + '" stroke="black" stroke-width="' + STROKE_W + '" />';
     }
 
-    function generateSVG(grid, rowTypes) {
+    function generateSVG(grid, rowTypes, textOpts) {
       const dataRows = grid.length;
       const totalRows = dataRows + 4;
       const h = totalRows * 5.0;
-      const parts = [];
+
+      var showRowNums = textOpts && textOpts.rowNumbers;
+      var cardTitle = textOpts && textOpts.title ? textOpts.title.trim() : '';
+      var fontFamily = (textOpts && textOpts.fontFamily) || 'Arial, Helvetica, sans-serif';
+      var rowNumFontSize = 3; // mm
+      var titleFontSize = 5; // mm
+
+      // Row numbers inside the card, right of the right edge guide (128.5)
+      // Space between right edge guide and card edge notch (~140) = ~11.5mm
+      var rowNumX = 131.5; // centered in gap between edge guide (128.5) and card edge (~134)
+
+      // Title inside the card, left of the left edge guide (13.5)
+      // Space between card edge notch (~2) and left edge guide = ~11.5mm
+      var titleX = 7.75; // centered in gap between card edge (~2) and edge guide (13.5)
+
+      var parts = [];
 
       parts.push('<?xml version="1.0" encoding="UTF-8" standalone="no"?>');
       parts.push('<svg baseProfile="full" height="' + fmtNum(h) + 'mm" preserveAspectRatio="none" version="1.1" viewBox="0 0 ' + fmtNum(CARD_WIDTH) + ' ' + fmtNum(h) + '" width="' + fmtNum(CARD_WIDTH) + 'mm" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">');
       parts.push('<defs />');
+
+      // === CUT GROUP ===
+      parts.push('<g id="cut">');
 
       // Polygon outline
       parts.push('<polygon fill="white" points="' + buildPolygonPoints(h) + '" stroke="black" stroke-width="' + STROKE_W + '" />');
@@ -1672,10 +1861,9 @@
 
         // Pattern holes
         const isFullRow = (i < 2) || (i >= totalRows - 2);
-        // Determine fill color for this row's pattern holes
         var holeFill = 'white';
         if (!isFullRow && rowTypes && rowTypes[i - 2] === 'inverse') {
-          holeFill = '#ab96af'; // lilac for inverse rows
+          holeFill = '#ab96af';
         }
         for (let c = 0; c < 24; c++) {
           let punched;
@@ -1692,17 +1880,97 @@
         // Right edge guide
         parts.push(circle(EDGE_GUIDE_X[1], patternY, EDGE_R));
 
-        // Transport row (between this pattern row and the next)
+        // Transport holes (Silver Reed: only at top and bottom of card)
         if (i < totalRows - 1) {
           const transportY = 5.0 + i * 5.0;
-          for (const tx of TRANSPORT_X) {
-            parts.push(circle(tx, transportY, TRANSPORT_R));
+          if (i === 0 || i === 2 || i === totalRows - 4 || i === totalRows - 2) {
+            for (const tx of TRANSPORT_X) {
+              parts.push(circle(tx, transportY, TRANSPORT_R));
+            }
           }
         }
       }
 
+      parts.push('</g>'); // end cut
+
+      // === DRAW GROUP (text annotations — inside the card) ===
+      var hasDrawContent = showRowNums || cardTitle;
+      if (hasDrawContent) {
+        parts.push('<g id="draw">');
+
+        // Row numbers: labels increase bottom-to-top, offset by machine shift.
+        // Top 2 lead-in rows are numbered (continuing the sequence above top data row).
+        // Bottom 2 lead-out rows are NOT numbered.
+        var machineOffset = (textOpts && textOpts.machineOffset) || 0;
+        var patternLen = (textOpts && textOpts.preShiftLen) || dataRows;
+        var shift = patternLen > 0 ? (machineOffset % patternLen) : 0;
+        var row1DrFound = -1;
+        if (showRowNums) {
+          // Data rows (skip bottom 2 data rows — they join the lead-out rows unnumbered)
+          for (var dr = 0; dr < dataRows - 2; dr++) {
+            var rowY = 2.5 + (dr + 2) * 5.0;
+            var bottomUp = dataRows - 1 - dr;
+            var rowLabel = ((patternLen - shift + bottomUp) % patternLen) + 1;
+            if (rowLabel === 1) row1DrFound = dr;
+            parts.push('<text x="' + fmtNum(rowNumX) + '" y="' + fmtNum(rowY) + '" font-family="' + fontFamily + '" font-size="' + rowNumFontSize + '" fill="black" dominant-baseline="central" text-anchor="start">' + rowLabel + '</text>');
+          }
+          // Still need to find row 1 even if it's in the skipped bottom rows
+          if (row1DrFound < 0) {
+            for (var dr = dataRows - 2; dr < dataRows; dr++) {
+              var bottomUp = dataRows - 1 - dr;
+              var rowLabel = ((patternLen - shift + bottomUp) % patternLen) + 1;
+              if (rowLabel === 1) { row1DrFound = dr; break; }
+            }
+          }
+          // Top 2 lead-in rows: continue the sequence above top data row
+          // Top data row (dr=0) label is known; lead-in rows get +1 and +2
+          var topLabel = ((patternLen - shift + dataRows - 1) % patternLen) + 1;
+          for (var li = 0; li < 2; li++) {
+            var leadY = 2.5 + (1 - li) * 5.0; // i=1 then i=0 (second lead-in, then first)
+            var leadLabel = ((topLabel + li) % patternLen) + 1;
+            parts.push('<text x="' + fmtNum(rowNumX) + '" y="' + fmtNum(leadY) + '" font-family="' + fontFamily + '" font-size="' + rowNumFontSize + '" fill="black" dominant-baseline="central" text-anchor="start">' + leadLabel + '</text>');
+          }
+        }
+
+        // Thick separator line just below row "1"
+        if (row1DrFound >= 0) {
+          var sepY = 2.5 + (row1DrFound + 2) * 5.0 + 2.5;
+          parts.push('<line x1="' + fmtNum(EDGE_GUIDE_X[0] - EDGE_R) + '" y1="' + fmtNum(sepY) + '" x2="' + fmtNum(EDGE_GUIDE_X[1] + EDGE_R) + '" y2="' + fmtNum(sepY) + '" stroke="black" stroke-width="0.5" />');
+        }
+
+        // Card title on the left side, rotated 90deg (reading bottom-to-top)
+        if (cardTitle) {
+          var titleCenterY = h / 2;
+          parts.push('<text x="' + fmtNum(titleX) + '" y="' + fmtNum(titleCenterY) + '" font-family="' + fontFamily + '" font-size="' + titleFontSize + '" fill="black" dominant-baseline="central" text-anchor="middle" transform="rotate(-90,' + fmtNum(titleX) + ',' + fmtNum(titleCenterY) + ')">' + escapeXml(cardTitle) + '</text>');
+        }
+
+        parts.push('</g>'); // end draw
+      }
+
       parts.push('</svg>');
       return parts.join('');
+    }
+
+    function escapeXml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    }
+
+    function extractSVGLayer(svgString, layerId) {
+      // Parse the SVG and return a version containing only the specified layer
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(svgString, 'image/svg+xml');
+      var svg = doc.querySelector('svg');
+      if (!svg) return svgString;
+
+      // Remove layers that don't match
+      var groups = svg.querySelectorAll('g[id]');
+      for (var i = 0; i < groups.length; i++) {
+        if (groups[i].id !== layerId) {
+          groups[i].parentNode.removeChild(groups[i]);
+        }
+      }
+
+      return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + new XMLSerializer().serializeToString(svg);
     }
 
     // === ACTIONS ===
@@ -1762,6 +2030,14 @@
       return { grid: resultGrid, types: resultTypes };
     }
 
+    function getTextOpts() {
+      return {
+        rowNumbers: document.getElementById('rowNumbersToggle').checked,
+        title: document.getElementById('cardTitleInput').value,
+        fontFamily: document.getElementById('fontPicker').value
+      };
+    }
+
     generateBtn.addEventListener('click', () => {
       if (currentGrid.length === 0) return;
       var repeats = Math.max(1, Math.min(50, parseInt(document.getElementById('repeatCount').value) || 1));
@@ -1776,25 +2052,49 @@
       var rp = repeatGrid(grid, repeats, rowTypes);
       grid = rp.grid;
       rowTypes = rp.types;
-      var sh = shiftGridForMachine(grid, getMachineOffset(), rowTypes);
+      var preShiftLen = grid.length;
+      var offset = getMachineOffset();
+      var sh = shiftGridForMachine(grid, offset, rowTypes);
       grid = sh.grid;
       rowTypes = sh.types;
-      generatedSVGString = generateSVG(grid, rowTypes);
+      var textOpts = getTextOpts();
+      textOpts.preShiftLen = preShiftLen;
+      textOpts.machineOffset = offset;
+      generatedSVGString = generateSVG(grid, rowTypes, textOpts);
       // Show inline (strip the XML declaration for innerHTML)
       const displaySVG = generatedSVGString.replace(/<\?xml[^?]*\?>/, '');
       svgOutput.innerHTML = displaySVG;
-      downloadBtn.disabled = false;
+      // Enable download buttons
+      var hasDrawContent = textOpts.rowNumbers || textOpts.title.trim();
+      downloadActions.style.display = 'flex';
+      downloadCombinedBtn.disabled = false;
+      downloadCutBtn.disabled = false;
+      downloadDrawBtn.disabled = !hasDrawContent;
     });
 
-    downloadBtn.addEventListener('click', () => {
-      if (!generatedSVGString) return;
-      const blob = new Blob([generatedSVGString], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+    function downloadSVG(svgStr, suffix) {
+      var blob = new Blob([svgStr], { type: 'image/svg+xml' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
       a.href = url;
-      a.download = 'punchcard-' + Date.now() + '.svg';
+      a.download = 'punchcard-' + suffix + '-' + Date.now() + '.svg';
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    downloadCombinedBtn.addEventListener('click', () => {
+      if (!generatedSVGString) return;
+      downloadSVG(generatedSVGString, 'combined');
+    });
+
+    downloadCutBtn.addEventListener('click', () => {
+      if (!generatedSVGString) return;
+      downloadSVG(extractSVGLayer(generatedSVGString, 'cut'), 'cut');
+    });
+
+    downloadDrawBtn.addEventListener('click', () => {
+      if (!generatedSVGString) return;
+      downloadSVG(extractSVGLayer(generatedSVGString, 'draw'), 'draw');
     });
 
     // === PWA ===
