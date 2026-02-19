@@ -2054,9 +2054,6 @@
       rowTypes = rp.types;
       var preShiftLen = grid.length;
       var offset = getMachineOffset();
-      var sh = shiftGridForMachine(grid, offset, rowTypes);
-      grid = sh.grid;
-      rowTypes = sh.types;
       var textOpts = getTextOpts();
       textOpts.preShiftLen = preShiftLen;
       textOpts.machineOffset = offset;
