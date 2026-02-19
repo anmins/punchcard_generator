@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern Fragment Creator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #27200f;
+      --accent: #5b8597;
+      --accent-hover: #7fafc1;
+      --bg: #FEF8EF;
+      --card-bg: #ffffff;
+      --error: #c0392b;
+      --muted: #7e6e5e;
+      --lavender: #896e8d;
+      --lilac: #ab96af;
+      --copper: #af8662;
+      --radius: 10px;
+      --max-width: 600px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--primary);
+      padding: 16px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .mode-toggle {
+      display: flex;
+      margin-bottom: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .mode-toggle button {
+      flex: 1;
+      padding: 12px 6px;
+      border: none;
+      background: var(--card-bg);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-toggle button.active {
+      background: var(--primary);
+      color: var(--bg);
+      font-weight: 700;
+    }
+    .hidden { display: none !important; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    input[type="file"] { display: none; }
+    .file-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      border: 2px solid var(--copper);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      margin-bottom: 12px;
+    }
+    .file-btn:hover { background: var(--copper); color: #fff; border-color: var(--copper); }
+    .file-name { font-size: 0.8rem; color: var(--muted); margin-left: 8px; }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .slider-row span {
+      min-width: 32px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+    }
+    .checkbox-row { margin-bottom: 12px; }
+    .checkbox-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .checkbox-row input[type="checkbox"] { accent-color: var(--accent); }
+
+    /* Image sub-mode buttons */
+    .img-mode-btn {
+      flex: 1;
+      padding: 8px;
+      border: 2px solid var(--primary);
+      background: var(--card-bg);
+      color: var(--primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: background 0.15s, color 0.15s;
+    }
+    .img-mode-btn.active {
+      background: var(--primary);
+      color: var(--bg);
+    }
+
+    /* Simple preview container */
+    #simplePreviewContainer {
+      position: relative;
+      margin-bottom: 12px;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
+    }
+    #simplePreviewContainer img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    #simpleGridOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Crop container */
+    #cropContainer {
+      position: relative;
+      margin-bottom: 12px;
+      touch-action: none;
+      user-select: none;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
+    }
+    #cropContainer canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Preview grid */
+    #previewContainer {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      border: 1px solid rgba(126,110,94,0.1);
+      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
+    }
+    #previewContainer h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    #previewGrid {
+      display: grid;
+      grid-template-columns: repeat(24, 1fr);
+      gap: 1px;
+      margin-bottom: 8px;
+      max-width: 100%;
+    }
+    .cell {
+      aspect-ratio: 1;
+      background: #e8ddd0;
+      border-radius: 2px;
+      position: relative;
+    }
+    .cell.punched { background: var(--primary); }
+    .cell .col-num {
+      display: none;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      text-align: center;
+      pointer-events: none;
+      width: 100%;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+    }
+    .show-col-nums .cell.punched .col-num {
+      display: block;
+    }
+    .cell.editable { cursor: pointer; }
+    .cell.editable:hover {
+      outline: 2px solid var(--lavender);
+      outline-offset: -2px;
+      z-index: 1;
+    }
+    .edit-rows {
+      grid-template-columns: auto repeat(24, 1fr) auto !important;
+    }
+    .row-gutter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: var(--muted);
+      min-width: 28px;
+      gap: 2px;
+      user-select: none;
+    }
+    .row-gutter.left { justify-content: flex-end; padding-right: 3px; }
+    .row-gutter.right { justify-content: flex-start; padding-left: 3px; }
+    .row-del-btn, .row-add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: none;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      font-family: inherit;
+    }
+    .row-del-btn { background: var(--error); color: #fff; }
+    .row-del-btn:hover { background: #c0392b; }
+    .row-add-btn { background: var(--accent); color: #fff; }
+    .row-add-btn:hover { background: #5a8a5e; }
+    #rowCount { font-size: 0.85rem; color: var(--muted); }
+
+    /* Export section */
+    #exportSection {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      border: 1px solid rgba(126,110,94,0.1);
+      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
+    }
+    #exportSection h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .export-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .export-field label {
+      margin: 0;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      min-width: 70px;
+    }
+    .export-field input, .export-field select {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    #exportOutput {
+      width: 100%;
+      min-height: 120px;
+      padding: 10px;
+      border: 1px solid var(--copper);
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      background: var(--bg);
+      color: var(--primary);
+      resize: vertical;
+      margin-top: 8px;
+    }
+    .export-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .export-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .status-msg {
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 6px;
+      min-height: 1.2em;
+    }
+    button { font-family: inherit; }
+    input[type="number"] { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <h1>Pattern Fragment Creator</h1>
+  <p class="subtitle">Create pattern fragments for the Playground library</p>
+
+  <div class="mode-toggle">
+    <button id="imageModeBtn" class="active">Image Upload</button>
+    <button id="blankModeBtn">Blank Grid</button>
+    <button id="cardModeBtn">Blank Card</button>
+  </div>
+
+  <section id="imageSection">
+    <label>Upload an image to convert to a pattern fragment:</label>
+    <span class="file-btn" id="imageInputBtn">Choose Image</span><span class="file-name" id="imageFileName"></span>
+    <input type="file" id="imageInput" accept="image/*">
+    <canvas id="hiddenCanvas" style="display:none"></canvas>
+    <canvas id="analysisCanvas" style="display:none"></canvas>
+
+    <div id="imageModeToggle" class="hidden" style="display:flex;gap:8px;margin-bottom:4px">
+      <button id="simpleModeBtn" class="img-mode-btn active">Simple</button>
+      <button id="chartScanBtn" class="img-mode-btn">Chart Scan</button>
+    </div>
+    <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:var(--muted);margin-bottom:12px"><strong>Simple</strong> converts any image to a 24-pixel-wide pattern. <strong>Chart Scan</strong> is for photos of existing punch card charts — it detects the grid and reads filled/empty cells.</p>
+
+    <div id="simplePreviewContainer" class="hidden">
+      <img id="simplePreviewImg" alt="Uploaded image">
+      <canvas id="simpleGridOverlay"></canvas>
+    </div>
+
+    <div id="cropContainer" class="hidden">
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Drag the handles or edges to crop to just the chart area. You can also drag inside the box to reposition it.</p>
+      <canvas id="cropCanvas"></canvas>
+    </div>
+
+    <div id="chartScanControls" class="hidden">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <label for="chartRows" style="margin:0;white-space:nowrap">Rows in image:</label>
+        <input type="number" id="chartRows" min="1" max="200" placeholder="e.g. 40" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem" required>
+        <span style="font-size:0.8rem;color:var(--muted)">(required)</span>
+      </div>
+      <div class="slider-row">
+        <label for="sampleSlider" style="margin:0;white-space:nowrap">Sample region:</label>
+        <input type="range" id="sampleSlider" min="20" max="70" value="40">
+        <span id="sampleValue">40%</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">How much of each cell's center area to sample. Lower = very center only; raise if marks are being missed.</p>
+      <button id="detectGridBtn" style="width:100%;padding:10px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:8px;font-family:inherit">Detect Grid &amp; Process</button>
+      <div id="gridStatus" style="font-size:0.85rem;color:var(--muted);margin-bottom:8px"></div>
+    </div>
+
+    <div id="imageControls" style="display:none">
+      <div class="slider-row">
+        <label for="thresholdSlider" style="margin:0;white-space:nowrap">Threshold:</label>
+        <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+        <span id="thresholdValue">128</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 4px">Cells darker than this value are marked as punched.</p>
+      <div class="checkbox-row">
+        <label><input type="checkbox" id="invertToggle"> Invert (light = punch)</label>
+      </div>
+    </div>
+
+    <div class="checkbox-row" id="gridOverlayToggleRow" style="margin-bottom:8px;display:none">
+      <label><input type="checkbox" id="gridOverlayToggle"> Show grid overlay on source image</label>
+    </div>
+  </section>
+
+  <section id="blankSection" class="hidden">
+    <div style="display:flex;align-items:center;gap:8px">
+      <label for="blankRows" style="margin:0;white-space:nowrap">Number of rows:</label>
+      <input type="number" id="blankRows" min="1" max="200" value="8" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
+      <button id="createBlankBtn" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit">Create</button>
+    </div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Creates an empty grid. Click cells to design your pattern fragment.</p>
+  </section>
+
+  <section id="cardSection" class="hidden">
+    <p style="font-size:0.9rem;color:var(--muted);margin-bottom:8px">Creates a full 60-row &times; 24-column blank punchcard.</p>
+    <button id="createCardBtn" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit">Create Blank Card</button>
+  </section>
+
+  <div id="previewContainer" style="display:none">
+    <h2>Preview <span style="font-weight:400;font-size:0.85rem;color:var(--muted)">(click cells to toggle)</span></h2>
+    <div class="checkbox-row" id="colNumToggleRow" style="margin-bottom:8px;display:none">
+      <label><input type="checkbox" id="colNumToggle"> Show column numbers on punched cells</label>
+    </div>
+    <div class="checkbox-row">
+      <label><input type="checkbox" id="editRowsToggle"> Edit rows</label>
+    </div>
+    <div id="previewGrid"></div>
+    <div id="rowCount"></div>
+  </div>
+
+  <div id="exportSection" style="display:none">
+    <h2>Export Fragment</h2>
+    <div class="export-field">
+      <label for="fragName">Name:</label>
+      <input type="text" id="fragName" placeholder="My Pattern">
+    </div>
+    <div class="export-field">
+      <label for="fragCat">Category:</label>
+      <select id="fragCat">
+        <option value="basics">Basics</option>
+        <option value="motifs" selected>Motifs</option>
+        <option value="transition">Transition</option>
+        <option value="borders">Borders</option>
+        <option value="allover">All-Over</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="export-btn" id="linkFileBtn" style="background:var(--copper)">Link patterns.js</button>
+      <button class="export-btn" id="addToLibBtn" disabled>Add to Library</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="export-btn" id="copyBtn" style="background:var(--muted);font-size:0.85rem;padding:8px" disabled>Copy to Clipboard</button>
+    </div>
+    <p class="status-msg" id="statusMsg"></p>
+    <textarea id="exportOutput" readonly placeholder="Fragment code will appear here..."></textarea>
+  </div>
+
+  <script>
+    // === STATE ===
+    let currentMode = 'image';
+    let currentGrid = [];
+    let originalImageData = null;
+    let imageWidth = 24;
+    let imageHeight = 0;
+
+    // Chart scan state
+    let imageProcessingMode = 'simple';
+    let sourceImage = null;
+    let cropRect = { x: 0, y: 0, w: 1, h: 1 };
+    let cropDragState = null;
+    let detectedCells = null;
+    let chartScanImageData = null;
+    let gridOverlayInfo = null;
+
+    // File System Access handle
+    let indexFileHandle = null;
+
+    // === DOM REFS ===
+    const imageModeBtn = document.getElementById('imageModeBtn');
+    const blankModeBtn = document.getElementById('blankModeBtn');
+    const imageSection = document.getElementById('imageSection');
+    const blankSection = document.getElementById('blankSection');
+    const imageInput = document.getElementById('imageInput');
+    const hiddenCanvas = document.getElementById('hiddenCanvas');
+    const analysisCanvas = document.getElementById('analysisCanvas');
+    const imageControls = document.getElementById('imageControls');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+    const thresholdValue = document.getElementById('thresholdValue');
+    const invertToggle = document.getElementById('invertToggle');
+    const blankRows = document.getElementById('blankRows');
+    const createBlankBtn = document.getElementById('createBlankBtn');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewGrid = document.getElementById('previewGrid');
+    const rowCount = document.getElementById('rowCount');
+    const exportSection = document.getElementById('exportSection');
+    const copyBtn = document.getElementById('copyBtn');
+    const exportOutput = document.getElementById('exportOutput');
+    const statusMsg = document.getElementById('statusMsg');
+
+    // Image sub-mode refs
+    const imageModeToggle = document.getElementById('imageModeToggle');
+    const simpleModeBtn = document.getElementById('simpleModeBtn');
+    const chartScanBtn = document.getElementById('chartScanBtn');
+    const imageModeHint = document.getElementById('imageModeHint');
+    const simplePreviewContainer = document.getElementById('simplePreviewContainer');
+    const simplePreviewImg = document.getElementById('simplePreviewImg');
+    const simpleGridOverlay = document.getElementById('simpleGridOverlay');
+    const cropContainer = document.getElementById('cropContainer');
+    const cropCanvas = document.getElementById('cropCanvas');
+    const chartScanControls = document.getElementById('chartScanControls');
+    const sampleSlider = document.getElementById('sampleSlider');
+    const sampleValueEl = document.getElementById('sampleValue');
+    const chartRowsInput = document.getElementById('chartRows');
+    const detectGridBtn = document.getElementById('detectGridBtn');
+    const gridStatus = document.getElementById('gridStatus');
+    const gridOverlayToggle = document.getElementById('gridOverlayToggle');
+    const gridOverlayToggleRow = document.getElementById('gridOverlayToggleRow');
+    const colNumToggle = document.getElementById('colNumToggle');
+    const colNumToggleRow = document.getElementById('colNumToggleRow');
+
+    // Export refs
+    const linkFileBtn = document.getElementById('linkFileBtn');
+    const addToLibBtn = document.getElementById('addToLibBtn');
+
+    // === MODE TOGGLE ===
+    const cardModeBtn = document.getElementById('cardModeBtn');
+    const cardSection = document.getElementById('cardSection');
+    const createCardBtn = document.getElementById('createCardBtn');
+
+    function setMode(mode) {
+      currentMode = mode;
+      imageModeBtn.classList.toggle('active', mode === 'image');
+      blankModeBtn.classList.toggle('active', mode === 'blank');
+      cardModeBtn.classList.toggle('active', mode === 'card');
+      imageSection.classList.toggle('hidden', mode !== 'image');
+      blankSection.classList.toggle('hidden', mode !== 'blank');
+      cardSection.classList.toggle('hidden', mode !== 'card');
+    }
+
+    imageModeBtn.addEventListener('click', () => setMode('image'));
+    blankModeBtn.addEventListener('click', () => setMode('blank'));
+    cardModeBtn.addEventListener('click', () => setMode('card'));
+
+    // === IMAGE UPLOAD ===
+    document.getElementById('imageInputBtn').addEventListener('click', () => imageInput.click());
+
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+      document.getElementById('imageFileName').textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          sourceImage = img;
+          imageModeToggle.classList.remove('hidden');
+          imageModeToggle.style.display = 'flex';
+          imageModeHint.classList.remove('hidden');
+          if (imageProcessingMode === 'simple') {
+            runSimpleMode(img);
+          } else {
+            initChartScanMode(img);
+          }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // === IMAGE SUB-MODE SWITCHING ===
+    function runSimpleMode(img) {
+      cropContainer.classList.add('hidden');
+      chartScanControls.classList.add('hidden');
+      gridStatus.textContent = '';
+      imageControls.style.display = 'block';
+      simplePreviewImg.src = img.src;
+      simplePreviewContainer.classList.remove('hidden');
+      const targetWidth = 24;
+      const aspect = img.height / img.width;
+      const targetHeight = Math.round(targetWidth * aspect);
+      imageWidth = targetWidth;
+      imageHeight = targetHeight;
+      const ctx = hiddenCanvas.getContext('2d');
+      hiddenCanvas.width = targetWidth;
+      hiddenCanvas.height = targetHeight;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      originalImageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+      processImage();
+    }
+
+    function initChartScanMode(img) {
+      simplePreviewContainer.classList.add('hidden');
+      cropContainer.classList.remove('hidden');
+      chartScanControls.classList.remove('hidden');
+      imageControls.style.display = 'block';
+      cropRect = { x: 0, y: 0, w: 1, h: 1 };
+      detectedCells = null;
+      chartScanImageData = null;
+      gridOverlayInfo = null;
+      gridOverlayToggle.checked = false;
+      gridOverlayToggleRow.style.display = 'none';
+      drawCrop();
+    }
+
+    simpleModeBtn.addEventListener('click', () => {
+      imageProcessingMode = 'simple';
+      simpleModeBtn.classList.add('active');
+      chartScanBtn.classList.remove('active');
+      if (sourceImage) runSimpleMode(sourceImage);
+    });
+
+    chartScanBtn.addEventListener('click', () => {
+      imageProcessingMode = 'chartScan';
+      chartScanBtn.classList.add('active');
+      simpleModeBtn.classList.remove('active');
+      if (sourceImage) initChartScanMode(sourceImage);
+    });
+
+    // === THRESHOLD / INVERT / SAMPLE HANDLERS ===
+    thresholdSlider.addEventListener('input', () => {
+      thresholdValue.textContent = thresholdSlider.value;
+      if (imageProcessingMode === 'simple' && originalImageData) {
+        processImage();
+      } else if (imageProcessingMode === 'chartScan' && detectedCells && chartScanImageData) {
+        reprocessChartScan();
+      }
+    });
+
+    invertToggle.addEventListener('change', () => {
+      if (imageProcessingMode === 'simple' && originalImageData) {
+        processImage();
+      } else if (imageProcessingMode === 'chartScan' && detectedCells && chartScanImageData) {
+        reprocessChartScan();
+      }
+    });
+
+    sampleSlider.addEventListener('input', () => {
+      sampleValueEl.textContent = sampleSlider.value + '%';
+      if (detectedCells && chartScanImageData) {
+        reprocessChartScan();
+      }
+    });
+
+    function reprocessChartScan() {
+      const ratio = parseInt(sampleSlider.value) / 100;
+      const threshold = parseInt(thresholdSlider.value);
+      const invert = invertToggle.checked;
+      const grid = processChartScanGrid(chartScanImageData, detectedCells, threshold, invert, ratio);
+      currentGrid = grid;
+      renderPreview(currentGrid);
+    }
+
+    function processImage() {
+      if (!originalImageData) return;
+      const threshold = parseInt(thresholdSlider.value);
+      const invert = invertToggle.checked;
+      const pixels = originalImageData.data;
+      const grid = [];
+      for (let row = 0; row < imageHeight; row++) {
+        let line = '';
+        for (let col = 0; col < 24; col++) {
+          const idx = (row * 24 + col) * 4;
+          const r = pixels[idx];
+          const g = pixels[idx + 1];
+          const b = pixels[idx + 2];
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          const isDark = luminance < threshold;
+          const isPunched = invert ? !isDark : isDark;
+          line += isPunched ? 'x' : '-';
+        }
+        grid.push(line);
+      }
+      currentGrid = grid;
+      renderPreview(currentGrid);
+
+      // Update grid overlay for simple mode
+      if (imageProcessingMode === 'simple' && sourceImage) {
+        gridOverlayInfo = { img: sourceImage, cols: 24, rows: imageHeight, cropRect: null };
+        gridOverlayToggleRow.style.display = '';
+        drawGridOverlay();
+      }
+    }
+
+    // === GRID OVERLAY ===
+    function drawGridLines(ctx, x0, y0, w, h, cols, rows) {
+      ctx.strokeStyle = 'rgba(255, 80, 80, 0.6)';
+      ctx.lineWidth = 1;
+      var colStep = w / cols;
+      var rowStep = h / rows;
+      for (var c = 0; c <= cols; c++) {
+        var x = Math.round(x0 + c * colStep) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x, y0);
+        ctx.lineTo(x, y0 + h);
+        ctx.stroke();
+      }
+      for (var r = 0; r <= rows; r++) {
+        var y = Math.round(y0 + r * rowStep) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.lineTo(x0 + w, y);
+        ctx.stroke();
+      }
+      // Column numbers along top
+      var fontSize = Math.max(9, Math.min(14, Math.floor(colStep * 0.6)));
+      ctx.font = 'bold ' + fontSize + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (var c = 0; c < cols; c++) {
+        var cx = x0 + (c + 0.5) * colStep;
+        var ty = y0 + 2;
+        var text = String(c + 1);
+        var tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(cx - tw / 2 - 2, ty, tw + 4, fontSize + 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(text, cx, ty + 1);
+      }
+      // Row numbers along left
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      var rowFontSize = Math.max(8, Math.min(13, Math.floor(rowStep * 0.55)));
+      ctx.font = 'bold ' + rowFontSize + 'px sans-serif';
+      for (var r = 0; r < rows; r++) {
+        var cy = y0 + (r + 0.5) * rowStep;
+        var text = String(r + 1);
+        var tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(x0 + 1, cy - rowFontSize / 2 - 1, tw + 4, rowFontSize + 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(text, x0 + 3, cy);
+      }
+    }
+
+    function drawSimpleGridOverlay() {
+      if (!gridOverlayInfo || !gridOverlayToggle.checked || imageProcessingMode !== 'simple') {
+        simpleGridOverlay.width = 0;
+        simpleGridOverlay.height = 0;
+        return;
+      }
+      var img = simplePreviewImg;
+      var w = img.naturalWidth;
+      var h = img.naturalHeight;
+      if (!w || !h) return;
+      simpleGridOverlay.width = w;
+      simpleGridOverlay.height = h;
+      var ctx = simpleGridOverlay.getContext('2d');
+      drawGridLines(ctx, 0, 0, w, h, gridOverlayInfo.cols, gridOverlayInfo.rows);
+    }
+
+    function drawGridOverlay() {
+      if (imageProcessingMode === 'simple') {
+        drawSimpleGridOverlay();
+      } else if (imageProcessingMode === 'chartScan') {
+        drawCrop();
+      }
+    }
+
+    gridOverlayToggle.addEventListener('change', drawGridOverlay);
+
+    // === CROP UI ===
+    function drawCrop() {
+      if (!sourceImage) return;
+      const containerWidth = cropContainer.clientWidth || 560;
+      const aspect = sourceImage.height / sourceImage.width;
+      const displayW = containerWidth;
+      const displayH = Math.round(containerWidth * aspect);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cropCanvas.style.width = displayW + 'px';
+      cropCanvas.style.height = displayH + 'px';
+      cropCanvas.width = displayW * dpr;
+      cropCanvas.height = displayH * dpr;
+      const ctx = cropCanvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.drawImage(sourceImage, 0, 0, displayW, displayH);
+      const cx = cropRect.x * displayW;
+      const cy = cropRect.y * displayH;
+      const cw = cropRect.w * displayW;
+      const ch = cropRect.h * displayH;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, displayW, cy);
+      ctx.fillRect(0, cy + ch, displayW, displayH - cy - ch);
+      ctx.fillRect(0, cy, cx, ch);
+      ctx.fillRect(cx + cw, cy, displayW - cx - cw, ch);
+      ctx.strokeStyle = '#ff6b9d';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx, cy, cw, ch);
+      const hs = 12;
+      var handles = [
+        [cx, cy], [cx + cw, cy], [cx, cy + ch], [cx + cw, cy + ch],
+        [cx + cw / 2, cy], [cx + cw / 2, cy + ch],
+        [cx, cy + ch / 2], [cx + cw, cy + ch / 2]
+      ];
+      for (var hi = 0; hi < handles.length; hi++) {
+        var hx = Math.max(0, Math.min(displayW - hs, handles[hi][0] - hs / 2));
+        var hy = Math.max(0, Math.min(displayH - hs, handles[hi][1] - hs / 2));
+        ctx.fillStyle = '#ff6b9d';
+        ctx.fillRect(hx, hy, hs, hs);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hx, hy, hs, hs);
+      }
+      // Draw grid overlay inside crop region if enabled
+      if (gridOverlayInfo && gridOverlayToggle.checked && imageProcessingMode === 'chartScan') {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx, cy, cw, ch);
+        ctx.clip();
+        drawGridLines(ctx, cx, cy, cw, ch, gridOverlayInfo.cols, gridOverlayInfo.rows);
+        ctx.restore();
+      }
+    }
+
+    function getCropPointerPos(e) {
+      const rect = cropCanvas.getBoundingClientRect();
+      return {
+        nx: (e.clientX - rect.left) / rect.width,
+        ny: (e.clientY - rect.top) / rect.height
+      };
+    }
+
+    function hitTestHandle(nx, ny) {
+      const tol = 0.04;
+      const cr = cropRect;
+      const cx = cr.x, cy = cr.y, cw = cr.w, ch = cr.h;
+      var corners = [
+        { id: 'tl', x: cx, y: cy }, { id: 'tr', x: cx + cw, y: cy },
+        { id: 'bl', x: cx, y: cy + ch }, { id: 'br', x: cx + cw, y: cy + ch }
+      ];
+      for (var i = 0; i < corners.length; i++) {
+        if (Math.abs(nx - corners[i].x) < tol && Math.abs(ny - corners[i].y) < tol)
+          return corners[i].id;
+      }
+      var edges = [
+        { id: 't', x: cx + cw / 2, y: cy }, { id: 'b', x: cx + cw / 2, y: cy + ch },
+        { id: 'l', x: cx, y: cy + ch / 2 }, { id: 'r', x: cx + cw, y: cy + ch / 2 }
+      ];
+      for (var i = 0; i < edges.length; i++) {
+        if (Math.abs(nx - edges[i].x) < tol && Math.abs(ny - edges[i].y) < tol)
+          return edges[i].id;
+      }
+      if (nx > cx && nx < cx + cw && ny > cy && ny < cy + ch) return 'move';
+      return null;
+    }
+
+    cropCanvas.addEventListener('pointerdown', (e) => {
+      const { nx, ny } = getCropPointerPos(e);
+      const handle = hitTestHandle(nx, ny);
+      if (!handle) return;
+      cropDragState = { handle: handle, startNx: nx, startNy: ny, startRect: Object.assign({}, cropRect) };
+      cropCanvas.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+
+    cropCanvas.addEventListener('pointermove', (e) => {
+      if (!cropDragState) return;
+      const { nx, ny } = getCropPointerPos(e);
+      const dx = nx - cropDragState.startNx;
+      const dy = ny - cropDragState.startNy;
+      const sr = cropDragState.startRect;
+      const minSize = 0.08;
+      var r = Object.assign({}, cropRect);
+      switch (cropDragState.handle) {
+        case 'move':
+          r.x = Math.max(0, Math.min(1 - sr.w, sr.x + dx));
+          r.y = Math.max(0, Math.min(1 - sr.h, sr.y + dy));
+          r.w = sr.w; r.h = sr.h;
+          break;
+        case 'tl':
+          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
+          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
+          r.w = sr.x + sr.w - r.x; r.h = sr.y + sr.h - r.y;
+          break;
+        case 'tr':
+          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
+          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
+          r.h = sr.y + sr.h - r.y;
+          break;
+        case 'bl':
+          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
+          r.w = sr.x + sr.w - r.x;
+          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
+          break;
+        case 'br':
+          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
+          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
+          break;
+        case 't':
+          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
+          r.h = sr.y + sr.h - r.y;
+          break;
+        case 'b':
+          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
+          break;
+        case 'l':
+          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
+          r.w = sr.x + sr.w - r.x;
+          break;
+        case 'r':
+          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
+          break;
+      }
+      cropRect = r;
+      drawCrop();
+      e.preventDefault();
+    });
+
+    cropCanvas.addEventListener('pointerup', () => { cropDragState = null; });
+    cropCanvas.addEventListener('pointercancel', () => { cropDragState = null; });
+
+    // === CHART SCAN: GRID DETECTION ===
+    function getCroppedImageData() {
+      const ctx = analysisCanvas.getContext('2d');
+      const sx = Math.round(cropRect.x * sourceImage.width);
+      const sy = Math.round(cropRect.y * sourceImage.height);
+      const sw = Math.max(1, Math.round(cropRect.w * sourceImage.width));
+      const sh = Math.max(1, Math.round(cropRect.h * sourceImage.height));
+      const analysisWidth = Math.min(sw, 1200);
+      const scale = analysisWidth / sw;
+      const analysisHeight = Math.max(1, Math.round(sh * scale));
+      analysisCanvas.width = analysisWidth;
+      analysisCanvas.height = analysisHeight;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, analysisWidth, analysisHeight);
+      return ctx.getImageData(0, 0, analysisWidth, analysisHeight);
+    }
+
+    function computeProjections(imageData) {
+      var data = imageData.data, w = imageData.width, h = imageData.height;
+      var hProj = new Float32Array(h);
+      var vProj = new Float32Array(w);
+      for (var y = 0; y < h; y++) {
+        var sum = 0;
+        for (var x = 0; x < w; x++) {
+          var idx = (y * w + x) * 4;
+          var lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+          var darkness = 1.0 - lum / 255.0;
+          sum += darkness;
+          vProj[x] += darkness;
+        }
+        hProj[y] = sum / w;
+      }
+      for (var x = 0; x < w; x++) vProj[x] /= h;
+      return { hProj: hProj, vProj: vProj };
+    }
+
+    function boxSmooth(arr, radius) {
+      var result = new Float32Array(arr.length);
+      for (var i = 0; i < arr.length; i++) {
+        var sum = 0, count = 0;
+        for (var j = Math.max(0, i - radius); j <= Math.min(arr.length - 1, i + radius); j++) {
+          sum += arr[j]; count++;
+        }
+        result[i] = sum / count;
+      }
+      return result;
+    }
+
+    function findGridLines(profile) {
+      var smoothed = boxSmooth(profile, 3);
+      var n = smoothed.length;
+      if (n < 10) return null;
+      var mean = 0;
+      for (var i = 0; i < n; i++) mean += smoothed[i];
+      mean /= n;
+      var variance = 0;
+      for (var i = 0; i < n; i++) variance += (smoothed[i] - mean) * (smoothed[i] - mean);
+      var stddev = Math.sqrt(variance / n);
+      var peakThreshold = mean + 0.5 * stddev;
+      var candidates = [];
+      for (var i = 2; i < n - 2; i++) {
+        if (smoothed[i] > peakThreshold &&
+            smoothed[i] >= smoothed[i - 1] && smoothed[i] >= smoothed[i + 1] &&
+            smoothed[i] >= smoothed[i - 2] && smoothed[i] >= smoothed[i + 2]) {
+          candidates.push(i);
+        }
+      }
+      if (candidates.length < 3) return null;
+      var period = estimatePeriodAutocorrelation(smoothed);
+      if (!period || period < 5) {
+        period = estimatePeriod(candidates);
+      }
+      if (!period || period < 5) return null;
+      return buildRegularGrid(candidates, period, n);
+    }
+
+    function estimatePeriod(candidates) {
+      var gaps = [];
+      for (var i = 1; i < candidates.length; i++) gaps.push(candidates[i] - candidates[i - 1]);
+      if (gaps.length === 0) return null;
+      gaps.sort(function(a, b) { return a - b; });
+      var median = gaps[Math.floor(gaps.length / 2)];
+      var filtered = gaps.filter(function(g) { return Math.abs(g - median) < median * 0.4; });
+      if (filtered.length === 0) return median;
+      var sum = 0;
+      for (var i = 0; i < filtered.length; i++) sum += filtered[i];
+      return sum / filtered.length;
+    }
+
+    function estimatePeriodAutocorrelation(profile) {
+      var n = profile.length;
+      if (n < 20) return null;
+      var mean = 0;
+      for (var i = 0; i < n; i++) mean += profile[i];
+      mean /= n;
+      var centered = new Float32Array(n);
+      for (var i = 0; i < n; i++) centered[i] = profile[i] - mean;
+      var minLag = 5;
+      var maxLag = Math.floor(n / 3);
+      if (maxLag <= minLag) return null;
+      var acorr = new Float32Array(maxLag + 1);
+      var ac0 = 0;
+      for (var i = 0; i < n; i++) ac0 += centered[i] * centered[i];
+      if (ac0 === 0) return null;
+      for (var lag = minLag; lag <= maxLag; lag++) {
+        var sum = 0;
+        for (var i = 0; i < n - lag; i++) {
+          sum += centered[i] * centered[i + lag];
+        }
+        acorr[lag] = sum / ac0;
+      }
+      var searchStart = minLag;
+      for (var i = minLag; i < maxLag; i++) {
+        if (acorr[i] < acorr[i + 1]) {
+          searchStart = i;
+          break;
+        }
+      }
+      var bestLag = -1;
+      var bestVal = 0;
+      for (var i = searchStart + 1; i < maxLag; i++) {
+        if (acorr[i] > bestVal &&
+            acorr[i] >= acorr[i - 1] && acorr[i] >= acorr[i + 1]) {
+          bestVal = acorr[i];
+          bestLag = i;
+          if (bestVal > 0.15) break;
+        }
+      }
+      if (bestLag < minLag || bestVal < 0.05) return null;
+      if (bestLag > minLag && bestLag < maxLag) {
+        var a = acorr[bestLag - 1];
+        var b = acorr[bestLag];
+        var c = acorr[bestLag + 1];
+        var denom = 2 * (2 * b - a - c);
+        if (denom !== 0) {
+          var offset = (a - c) / denom;
+          if (Math.abs(offset) < 0.5) {
+            return bestLag + offset;
+          }
+        }
+      }
+      return bestLag;
+    }
+
+    function buildRegularGrid(candidates, period, totalLength) {
+      var bestLines = null, bestScore = -1;
+      var startCount = Math.min(candidates.length, 5);
+      for (var s = 0; s < startCount; s++) {
+        var lines = [candidates[s]];
+        var score = 1;
+        var pos = candidates[s] + period;
+        while (pos < totalLength - 2) {
+          var snap = findNearestCandidate(candidates, Math.round(pos), period * 0.3);
+          if (snap !== null) { lines.push(snap); pos = snap + period; score++; }
+          else { lines.push(Math.round(pos)); pos += period; }
+        }
+        pos = candidates[s] - period;
+        while (pos > 2) {
+          var snap = findNearestCandidate(candidates, Math.round(pos), period * 0.3);
+          if (snap !== null) { lines.unshift(snap); pos = snap - period; score++; }
+          else { lines.unshift(Math.round(pos)); pos -= period; }
+        }
+        if (score > bestScore) { bestScore = score; bestLines = lines; }
+      }
+      return bestLines;
+    }
+
+    function findNearestCandidate(candidates, target, tolerance) {
+      var best = null, bestDist = tolerance + 1;
+      for (var i = 0; i < candidates.length; i++) {
+        var dist = Math.abs(candidates[i] - target);
+        if (dist < bestDist) { bestDist = dist; best = candidates[i]; }
+      }
+      return bestDist <= tolerance ? best : null;
+    }
+
+    function adjustLinesToCount(lines, target, totalLength) {
+      if (lines.length === target) return lines;
+      var medianGap = getMedianGap(lines);
+      var merged = [lines[0]];
+      for (var i = 1; i < lines.length; i++) {
+        if (lines[i] - merged[merged.length - 1] < medianGap * 0.5) {
+          merged[merged.length - 1] = Math.round((merged[merged.length - 1] + lines[i]) / 2);
+        } else {
+          merged.push(lines[i]);
+        }
+      }
+      if (merged.length < target) {
+        var newMedian = getMedianGap(merged);
+        var result = [merged[0]];
+        for (var i = 1; i < merged.length; i++) {
+          var gap = merged[i] - merged[i - 1];
+          if (gap > newMedian * 1.5 && result.length < target - (merged.length - i)) {
+            var divisions = Math.round(gap / newMedian);
+            for (var d = 1; d < divisions; d++) {
+              result.push(Math.round(merged[i - 1] + gap * d / divisions));
+            }
+          }
+          result.push(merged[i]);
+        }
+        merged = result;
+      }
+      if (merged.length > target) merged = merged.slice(0, target);
+      return merged;
+    }
+
+    function getMedianGap(lines) {
+      var gaps = [];
+      for (var i = 1; i < lines.length; i++) gaps.push(lines[i] - lines[i - 1]);
+      gaps.sort(function(a, b) { return a - b; });
+      return gaps[Math.floor(gaps.length / 2)] || 1;
+    }
+
+    function computeCellBounds(vLines, hLines) {
+      var cells = [];
+      for (var r = 0; r < hLines.length - 1; r++) {
+        var row = [];
+        for (var c = 0; c < vLines.length - 1; c++) {
+          row.push({ x: vLines[c], y: hLines[r], w: vLines[c + 1] - vLines[c], h: hLines[r + 1] - hLines[r] });
+        }
+        cells.push(row);
+      }
+      return cells;
+    }
+
+    function getCellCenterLuminance(imageData, cell, ratio) {
+      var data = imageData.data, w = imageData.width;
+      var marginX = cell.w * (1 - ratio) / 2;
+      var marginY = cell.h * (1 - ratio) / 2;
+      var sx = Math.round(cell.x + marginX);
+      var sy = Math.round(cell.y + marginY);
+      var sw = Math.max(1, Math.round(cell.w * ratio));
+      var sh = Math.max(1, Math.round(cell.h * ratio));
+      var totalLum = 0, pixelCount = 0;
+      for (var py = sy; py < sy + sh && py < imageData.height; py++) {
+        for (var px = sx; px < sx + sw && px < w; px++) {
+          var idx = (py * w + px) * 4;
+          totalLum += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+          pixelCount++;
+        }
+      }
+      return pixelCount > 0 ? totalLum / pixelCount : 255;
+    }
+
+    function processChartScanGrid(imageData, cells, threshold, invert, ratio) {
+      var grid = [];
+      for (var r = 0; r < cells.length; r++) {
+        var line = '';
+        for (var c = 0; c < Math.min(cells[r].length, 24); c++) {
+          var avgLum = getCellCenterLuminance(imageData, cells[r][c], ratio);
+          var isDark = avgLum < threshold;
+          var isPunched = invert ? !isDark : isDark;
+          line += isPunched ? 'x' : '-';
+        }
+        line = line.padEnd(24, '-').substring(0, 24);
+        grid.push(line);
+      }
+      return grid;
+    }
+
+    function otsuThreshold(values) {
+      var hist = new Array(256).fill(0);
+      for (var i = 0; i < values.length; i++) hist[Math.round(Math.max(0, Math.min(255, values[i])))]++;
+      var total = values.length;
+      var sumAll = 0;
+      for (var i = 0; i < 256; i++) sumAll += i * hist[i];
+      var bestThresh = 128, bestVariance = 0;
+      var sumBg = 0, countBg = 0;
+      for (var t = 0; t < 256; t++) {
+        countBg += hist[t];
+        if (countBg === 0) continue;
+        var countFg = total - countBg;
+        if (countFg === 0) break;
+        sumBg += t * hist[t];
+        var meanBg = sumBg / countBg;
+        var meanFg = (sumAll - sumBg) / countFg;
+        var bv = countBg * countFg * (meanBg - meanFg) * (meanBg - meanFg);
+        if (bv > bestVariance) { bestVariance = bv; bestThresh = t; }
+      }
+      return bestThresh;
+    }
+
+    // === DETECT GRID & PROCESS BUTTON ===
+    detectGridBtn.addEventListener('click', function() {
+      if (!sourceImage) return;
+      var userRows = parseInt(chartRowsInput.value);
+      if (!(userRows > 0)) {
+        gridStatus.textContent = 'Please enter the number of rows in the chart.';
+        gridStatus.style.color = 'var(--error)';
+        chartRowsInput.focus();
+        return;
+      }
+      gridStatus.textContent = 'Analyzing image...';
+      gridStatus.style.color = 'var(--muted)';
+      requestAnimationFrame(function() {
+        try {
+          var imgData = getCroppedImageData();
+          var w = imgData.width, h = imgData.height;
+          var vLines = [];
+          var colStep = w / 24;
+          for (var i = 0; i <= 24; i++) vLines.push(Math.round(i * colStep));
+          var hLines = [];
+          var rowStep = h / userRows;
+          for (var i = 0; i <= userRows; i++) hLines.push(Math.round(i * rowStep));
+          var cells = computeCellBounds(vLines, hLines);
+          detectedCells = cells;
+          chartScanImageData = imgData;
+          var ratio = parseInt(sampleSlider.value) / 100;
+          var luminances = [];
+          for (var r = 0; r < cells.length; r++) {
+            for (var c = 0; c < Math.min(cells[r].length, 24); c++) {
+              luminances.push(getCellCenterLuminance(imgData, cells[r][c], ratio));
+            }
+          }
+          var autoThresh = otsuThreshold(luminances);
+          thresholdSlider.value = autoThresh;
+          thresholdValue.textContent = autoThresh;
+          var invert = invertToggle.checked;
+          var grid = processChartScanGrid(imgData, cells, autoThresh, invert, ratio);
+          currentGrid = grid;
+          renderPreview(currentGrid);
+          var numRows = cells.length;
+          gridStatus.textContent = '24 cols \u00d7 ' + numRows + ' rows. Auto-threshold: ' + autoThresh;
+          gridStatus.style.color = 'var(--accent)';
+          gridOverlayInfo = { img: sourceImage, cols: 24, rows: userRows, cropRect: { x: cropRect.x, y: cropRect.y, w: cropRect.w, h: cropRect.h } };
+          gridOverlayToggleRow.style.display = '';
+          drawGridOverlay();
+        } catch (err) {
+          gridStatus.textContent = 'Error: ' + err.message + '. Try adjusting the crop.';
+          gridStatus.style.color = 'var(--error)';
+        }
+      });
+    });
+
+    // === BLANK GRID ===
+    createBlankBtn.addEventListener('click', createBlankGrid);
+
+    function createBlankGrid() {
+      const rows = Math.max(1, Math.min(200, parseInt(blankRows.value) || 8));
+      blankRows.value = rows;
+      currentGrid = [];
+      for (let i = 0; i < rows; i++) {
+        currentGrid.push('------------------------');
+      }
+      renderPreview(currentGrid);
+    }
+
+    // === BLANK CARD ===
+    createCardBtn.addEventListener('click', () => {
+      currentGrid = [];
+      for (let i = 0; i < 60; i++) {
+        currentGrid.push('------------------------');
+      }
+      renderPreview(currentGrid);
+    });
+
+    // === RENDER PREVIEW (no lead rows — fragments only) ===
+    function renderPreview(grid) {
+      previewGrid.innerHTML = '';
+      if (grid.length === 0) {
+        previewContainer.style.display = 'none';
+        exportSection.style.display = 'none';
+        colNumToggleRow.style.display = 'none';
+        rowCount.textContent = '';
+        return;
+      }
+      previewContainer.style.display = '';
+      exportSection.style.display = '';
+      copyBtn.disabled = false;
+      colNumToggleRow.style.display = '';
+
+      var showNums = colNumToggle.checked;
+      previewGrid.classList.toggle('show-col-nums', showNums);
+
+      var editRows = document.getElementById('editRowsToggle').checked;
+      previewGrid.classList.toggle('edit-rows', editRows);
+
+      function addGutters(rowIdx) {
+        if (!editRows) return null;
+        var gl = document.createElement('div');
+        gl.className = 'row-gutter left';
+        gl.innerHTML = '<span>' + (rowIdx + 1) + '</span><button class="row-del-btn" data-del-row="' + rowIdx + '" title="Delete row">\u00d7</button>';
+        previewGrid.appendChild(gl);
+        return function() {
+          var gr = document.createElement('div');
+          gr.className = 'row-gutter right';
+          gr.innerHTML = '<button class="row-add-btn" data-add-after="' + rowIdx + '" title="Add row">+</button>';
+          previewGrid.appendChild(gr);
+        };
+      }
+
+      for (let r = 0; r < grid.length; r++) {
+        var addRight = addGutters(r);
+        for (let c = 0; c < 24; c++) {
+          const cell = document.createElement('div');
+          const isPunched = grid[r][c] === 'x';
+          cell.className = 'cell editable' + (isPunched ? ' punched' : '');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          // Column number span
+          var numSpan = document.createElement('span');
+          numSpan.className = 'col-num';
+          numSpan.textContent = c + 1;
+          cell.appendChild(numSpan);
+          previewGrid.appendChild(cell);
+        }
+        if (addRight) addRight();
+      }
+
+      rowCount.textContent = grid.length + ' rows';
+      updateExportOutput();
+    }
+
+    // === COLUMN NUMBER TOGGLE ===
+    colNumToggle.addEventListener('change', function() {
+      previewGrid.classList.toggle('show-col-nums', this.checked);
+    });
+
+    // === EDIT ROWS TOGGLE ===
+    document.getElementById('editRowsToggle').addEventListener('change', function() {
+      renderPreview(currentGrid);
+    });
+
+    // === ROW ADD/DELETE ===
+    previewGrid.addEventListener('click', function(e) {
+      var delBtn = e.target.closest('[data-del-row]');
+      if (delBtn) {
+        var row = parseInt(delBtn.dataset.delRow);
+        if (currentGrid.length <= 1) return;
+        currentGrid.splice(row, 1);
+        renderPreview(currentGrid);
+        return;
+      }
+      var addBtn = e.target.closest('[data-add-after]');
+      if (addBtn) {
+        var afterRow = parseInt(addBtn.dataset.addAfter);
+        currentGrid.splice(afterRow + 1, 0, '------------------------');
+        renderPreview(currentGrid);
+        return;
+      }
+    });
+
+    // === CELL EDITING ===
+    previewGrid.addEventListener('click', (e) => {
+      var cell = e.target.closest('.editable');
+      if (!cell) return;
+      // Don't toggle if a gutter button was clicked
+      if (e.target.closest('[data-del-row]') || e.target.closest('[data-add-after]')) return;
+      const row = parseInt(cell.dataset.row);
+      const col = parseInt(cell.dataset.col);
+      const line = currentGrid[row];
+      const newChar = line[col] === 'x' ? '-' : 'x';
+      currentGrid[row] = line.substring(0, col) + newChar + line.substring(col + 1);
+      cell.classList.toggle('punched');
+      updateExportOutput();
+    });
+
+    // === EXPORT ===
+    function generateId() {
+      return 'f_' + crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    }
+
+    let currentFragId = generateId();
+
+    function updateExportOutput() {
+      if (currentGrid.length === 0) {
+        exportOutput.value = '';
+        return;
+      }
+      const name = document.getElementById('fragName').value.trim() || 'Unnamed';
+      const cat = document.getElementById('fragCat').value;
+      const gridLines = currentGrid.map(row => "        '" + row + "'").join(',\n');
+      exportOutput.value = "      {\n        id: '" + currentFragId + "',\n        name: '" + name + "',\n        cat: '" + cat + "',\n        grid: [\n" + gridLines + "\n        ]\n      }";
+      addToLibBtn.disabled = !indexFileHandle || currentGrid.length === 0;
+    }
+
+    document.getElementById('fragName').addEventListener('input', updateExportOutput);
+    document.getElementById('fragCat').addEventListener('change', updateExportOutput);
+
+    // === CLIPBOARD COPY (fallback) ===
+    copyBtn.addEventListener('click', () => {
+      if (currentGrid.length === 0) return;
+      updateExportOutput();
+      navigator.clipboard.writeText(exportOutput.value).then(() => {
+        showStatus('Copied!', 'var(--accent)');
+      }).catch(() => {
+        exportOutput.select();
+        document.execCommand('copy');
+        showStatus('Copied!', 'var(--accent)');
+      });
+    });
+
+    function showStatus(text, color) {
+      statusMsg.textContent = text;
+      statusMsg.style.color = color || 'var(--accent)';
+      clearTimeout(showStatus._timer);
+      showStatus._timer = setTimeout(() => { statusMsg.textContent = ''; }, 3000);
+    }
+
+    // === FILE SYSTEM ACCESS: LINK & ADD TO LIBRARY ===
+    linkFileBtn.addEventListener('click', async () => {
+      if (!window.showOpenFilePicker) {
+        showStatus('File System Access API not available. Use Copy to Clipboard instead.', 'var(--error)');
+        return;
+      }
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{ description: 'JS files', accept: { 'text/javascript': ['.js'] } }],
+          multiple: false
+        });
+        // Verify it contains PATTERN_LIB
+        const file = await handle.getFile();
+        const text = await file.text();
+        if (!text.includes('PATTERN_LIB')) {
+          showStatus('That file does not contain PATTERN_LIB. Pick patterns.js.', 'var(--error)');
+          return;
+        }
+        indexFileHandle = handle;
+        linkFileBtn.textContent = '\u2713 ' + file.name;
+        linkFileBtn.style.background = 'var(--accent)';
+        addToLibBtn.disabled = currentGrid.length === 0;
+        showStatus('Linked! You can now add fragments directly.', 'var(--accent)');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          showStatus('Error: ' + err.message, 'var(--error)');
+        }
+      }
+    });
+
+    addToLibBtn.addEventListener('click', async () => {
+      if (!indexFileHandle || currentGrid.length === 0) return;
+
+      try {
+        const file = await indexFileHandle.getFile();
+        const text = await file.text();
+
+        // Find insertion point: the last ]; in the file (end of PATTERN_LIB)
+        var idx = text.lastIndexOf('];');
+        if (idx === -1) {
+          showStatus('Could not find end of PATTERN_LIB in file.', 'var(--error)');
+          return;
+        }
+
+        // Build the new entry
+        updateExportOutput();
+        var newEntry = ',\n' + exportOutput.value;
+
+        // Insert before the ];
+        var newText = text.substring(0, idx) + newEntry + '\n' + text.substring(idx);
+
+        // Write back
+        const writable = await indexFileHandle.createWritable();
+        await writable.write(newText);
+        await writable.close();
+
+        const displayName = document.getElementById('fragName').value.trim() || currentFragId;
+        showStatus('\u2713 Added "' + displayName + '" to patterns.js!', 'var(--accent)');
+
+        // Fresh ID for next add
+        currentFragId = generateId();
+        updateExportOutput();
+      } catch (err) {
+        showStatus('Write error: ' + err.message, 'var(--error)');
+      }
+    });
+  </script>
+</body>
+</html>

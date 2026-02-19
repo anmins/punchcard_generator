@@ -1,7 +1,11 @@
-const CACHE_NAME = 'punchcard-v7';
+const CACHE_NAME = 'semiotic-fluid-v41';
 const ASSETS = [
   './',
   './index.html',
+  './css/main.css',
+  './js/app.js',
+  './patterns.js',
+  './pattern-creator.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'

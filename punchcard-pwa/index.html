@@ -5,2101 +5,387 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Punch Card">
+  <meta name="apple-mobile-web-app-title" content="Semiotic Fluid">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <title>Punch Card Generator</title>
+  <title>Semiotic Fluid</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #27200f;
-      --accent: #5b8597;
-      --accent-hover: #7fafc1;
-      --bg: #FEF8EF;
-      --card-bg: #ffffff;
-      --error: #c0392b;
-      --muted: #7e6e5e;
-      --lavender: #896e8d;
-      --lilac: #ab96af;
-      --copper: #af8662;
-      --radius: 10px;
-      --max-width: 600px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--primary);
-      padding: 16px;
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
-    h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-    .mode-toggle {
-      display: flex;
-      margin-bottom: 16px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 2px solid var(--primary);
-    }
-    .mode-toggle button {
-      flex: 1;
-      padding: 12px 6px;
-      border: none;
-      background: var(--card-bg);
-      color: var(--primary);
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-    .mode-toggle button.active {
-      background: var(--primary);
-      color: var(--bg);
-    }
-    section {
-      background: var(--card-bg);
-      padding: 16px;
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      border: 1px solid rgba(126,110,94,0.1);
-      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
-    }
-    textarea {
-      width: 100%;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      padding: 8px;
-      border: 1px solid var(--copper);
-      border-radius: 6px;
-      resize: vertical;
-      min-height: 200px;
-      background: #fff;
-    }
-    textarea:focus {
-      outline: 2px solid var(--accent);
-      outline-offset: -1px;
-    }
-    .error {
-      color: var(--error);
-      font-size: 0.85rem;
-      margin-top: 8px;
-      white-space: pre-line;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-    input[type="file"] {
-      display: none;
-    }
-    .file-btn {
-      display: inline-block;
-      padding: 8px 16px;
-      border: 2px solid var(--copper);
-      border-radius: var(--radius);
-      background: var(--bg);
-      color: var(--primary);
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-      margin-bottom: 12px;
-    }
-    .file-btn:hover {
-      background: var(--copper);
-      color: #fff;
-      border-color: var(--copper);
-    }
-    .file-btn:active {
-      background: var(--primary);
-      color: var(--bg);
-      border-color: var(--primary);
-    }
-    .file-name {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-left: 8px;
-    }
-    .slider-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .slider-row input[type="range"] {
-      flex: 1;
-      accent-color: var(--accent);
-    }
-    .slider-row span {
-      min-width: 32px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      color: var(--muted);
-    }
-    .checkbox-row {
-      margin-bottom: 12px;
-    }
-    .checkbox-row label {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-    .checkbox-row input[type="checkbox"] {
-      accent-color: var(--accent);
-    }
-    #imageControls { display: none; }
-    #previewContainer {
-      background: var(--card-bg);
-      padding: 16px;
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      border: 1px solid rgba(126,110,94,0.1);
-      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
-    }
-    #previewContainer h2 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    #previewGrid {
-      display: grid;
-      grid-template-columns: repeat(24, 1fr);
-      gap: 1px;
-      margin-bottom: 8px;
-      max-width: 100%;
-    }
-    .cell {
-      aspect-ratio: 1;
-      background: #e8ddd0;
-      border-radius: 2px;
-      position: relative;
-    }
-    .cell.punched {
-      background: var(--primary);
-    }
-    .cell .col-num {
-      display: none;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1;
-      text-align: center;
-      pointer-events: none;
-      width: 100%;
-      position: absolute;
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%);
-    }
-    .show-col-nums .cell.punched .col-num {
-      display: block;
-    }
-    .cell.lead {
-      background: var(--lilac);
-    }
-    .cell.editable {
-      cursor: pointer;
-    }
-    .cell.editable:hover {
-      outline: 2px solid var(--lavender);
-      outline-offset: -2px;
-      z-index: 1;
-    }
-    .edit-rows {
-      grid-template-columns: auto repeat(24, 1fr) auto !important;
-    }
-    .row-gutter {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      color: var(--muted);
-      min-width: 28px;
-      gap: 2px;
-      user-select: none;
-    }
-    .row-gutter.left {
-      justify-content: flex-end;
-      padding-right: 3px;
-    }
-    .row-gutter.right {
-      justify-content: flex-start;
-      padding-left: 3px;
-    }
-    .row-del-btn, .row-add-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      border: none;
-      border-radius: 3px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-      font-family: inherit;
-    }
-    .row-del-btn {
-      background: var(--error);
-      color: #fff;
-    }
-    .row-del-btn:hover {
-      background: #c0392b;
-    }
-    .row-add-btn {
-      background: var(--accent);
-      color: #fff;
-    }
-    .row-add-btn:hover {
-      background: #5a8a5e;
-    }
-    #rowCount {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .actions button {
-      flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: var(--radius);
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      min-height: 44px;
-      transition: background 0.15s;
-    }
-    #generateBtn {
-      background: var(--accent);
-      color: #fff;
-    }
-    #generateBtn:hover:not(:disabled) {
-      background: var(--accent-hover);
-    }
-    #generateBtn:disabled {
-      background: #c4b8a8;
-      cursor: not-allowed;
-    }
-    .dl-btn {
-      flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: var(--radius);
-      font-family: inherit;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      min-height: 44px;
-      transition: background 0.15s;
-      background: var(--primary);
-      color: var(--bg);
-    }
-    .dl-btn:hover:not(:disabled) {
-      background: #3d3422;
-    }
-    .dl-btn:disabled {
-      background: #c4b8a8;
-      cursor: not-allowed;
-    }
-    #svgOutput {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 16px;
-      overflow-x: auto;
-      text-align: center;
-      border: 1px solid rgba(126,110,94,0.1);
-      box-shadow: 0 1px 4px rgba(39,32,15,0.07);
-    }
-    #svgOutput svg {
-      max-width: 100%;
-      height: auto;
-    }
-    .img-mode-btn {
-      flex: 1;
-      padding: 8px;
-      border: 2px solid var(--primary);
-      background: var(--card-bg);
-      color: var(--primary);
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      border-radius: var(--radius);
-      transition: background 0.15s, color 0.15s;
-    }
-    .img-mode-btn.active {
-      background: var(--primary);
-      color: var(--bg);
-    }
-    #simplePreviewContainer {
-      margin-bottom: 12px;
-      max-width: 100%;
-      overflow: hidden;
-      border: 1px solid var(--copper);
-      border-radius: 6px;
-    }
-    #simplePreviewContainer img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-    #cropContainer {
-      position: relative;
-      margin-bottom: 12px;
-      touch-action: none;
-      user-select: none;
-      max-width: 100%;
-      overflow: hidden;
-      border: 1px solid var(--copper);
-      border-radius: 6px;
-    }
-    #cropContainer canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-    #simplePreviewContainer {
-      position: relative;
-    }
-    #simpleGridOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-    .hidden { display: none !important; }
-    .header-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      gap: 8px;
-    }
-    .header-row h1 {
-      margin-bottom: 0;
-      min-width: 0;
-    }
-    #refreshAllBtn {
-      flex-shrink: 0;
-      background: none;
-      border: 2px solid var(--muted);
-      border-radius: var(--radius);
-      color: var(--muted);
-      font-family: inherit;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 6px 12px;
-      cursor: pointer;
-      min-height: 36px;
-      transition: background 0.15s, color 0.15s;
-    }
-    #refreshAllBtn:hover {
-      background: var(--muted);
-      color: var(--bg);
-    }
-    #refreshAllBtn:active {
-      background: var(--primary);
-      color: var(--bg);
-    }
-    input[type="number"] {
-      font-family: inherit;
-    }
-    button {
-      font-family: inherit;
-    }
-  </style>
+  <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-  <div class="header-row">
-    <h1>Punch Card Generator</h1>
-    <button id="refreshAllBtn">Refresh All</button>
-  </div>
 
-  <div class="mode-toggle">
-    <button id="imageModeBtn" class="active">Image Upload</button>
-    <button id="textModeBtn">Text Input</button>
-    <button id="blankModeBtn">Blank Card</button>
-  </div>
+  <!-- ===== HEADER BAR ===== -->
+  <header class="sf-header">
+    <div class="sf-header-brand">
+      <h1 class="sf-logo">Semiotic Fluid</h1>
+      <span class="sf-tagline">Design suite for punch cards &amp; symbolic patterning</span>
+    </div>
+    <div class="sf-header-actions">
+      <button id="settingsBtn" class="sf-icon-btn" title="Settings">⚙️</button>
+      <button id="refreshAllBtn" class="sf-icon-btn" title="Reset everything">↺</button>
+    </div>
+  </header>
 
-  <section id="textSection" class="hidden">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <label for="txtFileInput" style="margin:0;white-space:nowrap">Load .txt file:</label>
-      <span class="file-btn" id="txtFileBtn">Choose File</span><span class="file-name" id="txtFileName"></span>
-      <input type="file" id="txtFileInput" accept=".txt,text/plain">
+  <!-- ===== MOBILE NAV BAR (visible ≤ 800px) ===== -->
+  <nav class="sf-mobile-nav">
+    <div class="sf-mobile-nav-inner">
+      <button class="sf-mobile-nav-btn active" data-mobile-panel="canvas">
+        <span class="sf-nav-icon">🎨</span> Canvas
+      </button>
+      <button class="sf-mobile-nav-btn" data-mobile-panel="left">
+        <span class="sf-nav-icon">📷</span> Import
+      </button>
+      <button class="sf-mobile-nav-btn" data-mobile-panel="right">
+        <span class="sf-nav-icon">📚</span> Library
+      </button>
     </div>
-    <textarea id="textInput" placeholder="Enter pattern (24 chars per line)&#10;x = punch, - = blank&#10;&#10;Example:&#10;xx--xx--xx--xx--xx--xx--&#10;--xx--xx--xx--xx--xx--xx"></textarea>
-    <div id="textError" class="error"></div>
-    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Each line must be exactly 24 characters. Use <strong>x</strong> for a punched hole and <strong>-</strong> for blank. You can also load a .txt file above.</p>
-  </section>
+  </nav>
 
-  <section id="blankSection" class="hidden">
-    <div style="display:flex;align-items:center;gap:8px">
-      <label for="blankRows" style="margin:0;white-space:nowrap">Number of rows:</label>
-      <input type="number" id="blankRows" min="1" max="200" value="20" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
-      <button id="createBlankBtn" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit">Create</button>
-    </div>
-    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Creates an empty card with the specified number of rows. You can then click individual cells in the preview below to design your pattern.</p>
-  </section>
+  <!-- ===== MAIN LAYOUT: Left Panel | Canvas | Right Panel ===== -->
+  <div class="sf-main">
 
-  <section id="imageSection">
-    <label>Upload an image to convert to a punch pattern:</label>
-    <span class="file-btn" id="imageInputBtn">Choose Image</span><span class="file-name" id="imageFileName"></span>
-    <input type="file" id="imageInput" accept="image/*">
-    <canvas id="hiddenCanvas" style="display:none"></canvas>
-    <canvas id="analysisCanvas" style="display:none"></canvas>
-    <div id="imageModeToggle" class="hidden" style="gap:8px;margin-bottom:4px">
-      <button id="simpleModeBtn" class="img-mode-btn active">Simple</button>
-      <button id="chartScanBtn" class="img-mode-btn">Chart Scan</button>
-    </div>
-    <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:var(--muted);margin-bottom:12px"><strong>Simple</strong> converts any image to a 24-pixel-wide pattern. <strong>Chart Scan</strong> is for photos of existing punch card charts — it detects the grid and reads filled/empty cells.</p>
-    <div id="simplePreviewContainer" class="hidden">
-      <img id="simplePreviewImg" alt="Uploaded image">
-      <canvas id="simpleGridOverlay"></canvas>
-    </div>
-    <div id="cropContainer" class="hidden">
-      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Drag the handles or edges to crop to just the chart area. You can also drag inside the box to reposition it.</p>
-      <canvas id="cropCanvas"></canvas>
-    </div>
-    <div id="chartScanControls" class="hidden">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <label for="chartRows" style="margin:0;white-space:nowrap">Rows in image:</label>
-        <input type="number" id="chartRows" min="1" max="200" placeholder="e.g. 40" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem" required>
-        <span style="font-size:0.8rem;color:var(--muted)">(required)</span>
+    <!-- ========== LEFT PANEL — Import + Export + Settings ========== -->
+    <div class="sf-left-panel" id="leftPanel">
+
+      <!-- SECTION: 3-Way Input Selector -->
+      <div class="sf-input-selector" id="inputSelector">
+        <div class="sf-input-selector-label">Create your pattern:</div>
+        <div class="sf-input-tabs">
+          <button class="sf-input-tab active" data-input="image">
+            <span class="sf-input-tab-icon">📷</span>
+            <span class="sf-input-tab-text">Import Image</span>
+          </button>
+          <button class="sf-input-tab" data-input="text">
+            <span class="sf-input-tab-icon">📝</span>
+            <span class="sf-input-tab-text">Paste / Type</span>
+          </button>
+          <button class="sf-input-tab" data-input="blank">
+            <span class="sf-input-tab-icon">📄</span>
+            <span class="sf-input-tab-text">Blank Canvas</span>
+          </button>
+        </div>
       </div>
-      <div class="slider-row">
-        <label for="sampleSlider" style="margin:0;white-space:nowrap">Sample region:</label>
-        <input type="range" id="sampleSlider" min="20" max="70" value="40">
-        <span id="sampleValue">40%</span>
+
+      <!-- INPUT: Import Image (shown when image tab active) -->
+      <div class="sf-input-panel" id="inputImage">
+        <label>Upload an image to convert to a punch pattern:</label>
+        <span class="file-btn" id="imageInputBtn">Choose Image</span><span class="file-name" id="imageFileName"></span>
+        <input type="file" id="imageInput" accept="image/*">
+        <canvas id="hiddenCanvas" style="display:none"></canvas>
+        <canvas id="analysisCanvas" style="display:none"></canvas>
+        <div id="imageModeToggle" class="hidden" style="gap:8px;margin-bottom:4px">
+          <button id="simpleModeBtn" class="img-mode-btn active">Simple</button>
+          <button id="chartScanBtn" class="img-mode-btn">Chart Scan</button>
+        </div>
+        <p id="imageModeHint" class="hidden" style="font-size:0.8rem;color:var(--muted);margin-bottom:12px"><strong>Simple</strong> converts any image to a pattern. <strong>Chart Scan</strong> detects grid cells from photos of existing charts.</p>
+        <div id="simplePreviewContainer" class="hidden">
+          <img id="simplePreviewImg" alt="Uploaded image">
+          <canvas id="simpleGridOverlay"></canvas>
+        </div>
+        <div id="cropContainer" class="hidden">
+          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Drag handles to crop to the chart area.</p>
+          <canvas id="cropCanvas"></canvas>
+        </div>
+        <div id="chartScanControls" class="hidden">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <label for="chartRows" style="margin:0;white-space:nowrap">Rows in image:</label>
+            <input type="number" id="chartRows" min="1" max="200" placeholder="e.g. 40" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem" required>
+            <span style="font-size:0.8rem;color:var(--muted)">(required)</span>
+          </div>
+          <div class="slider-row">
+            <label for="sampleSlider" style="margin:0;white-space:nowrap">Sample region:</label>
+            <input type="range" id="sampleSlider" min="20" max="70" value="40">
+            <span id="sampleValue">40%</span>
+          </div>
+          <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">How much of each cell's center to sample. Lower = focus on center.</p>
+          <button id="detectGridBtn" style="width:100%;padding:10px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:8px;font-family:inherit">Detect Grid &amp; Process</button>
+          <div id="gridStatus" style="font-size:0.85rem;color:var(--muted);margin-bottom:8px"></div>
+        </div>
+        <div id="imageControls">
+          <div class="slider-row">
+            <label for="thresholdSlider" style="margin:0;white-space:nowrap">Threshold:</label>
+            <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+            <span id="thresholdValue">128</span>
+          </div>
+          <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 4px">Cells darker than this value are punched. 128 = 50% grey.</p>
+          <div class="checkbox-row">
+            <label><input type="checkbox" id="invertToggle"> Invert (light = punch)</label>
+          </div>
+        </div>
+        <div class="checkbox-row" id="gridOverlayToggleRow" style="margin-bottom:8px;display:none">
+          <label><input type="checkbox" id="gridOverlayToggle"> Show grid overlay</label>
+        </div>
       </div>
-      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">How much of each cell's center area to sample for darkness. Lower values focus on the very center (ignoring grid lines); raise if marks are being missed.</p>
-      <button id="detectGridBtn" style="width:100%;padding:10px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:8px;font-family:inherit">Detect Grid &amp; Process</button>
-      <div id="gridStatus" style="font-size:0.85rem;color:var(--muted);margin-bottom:8px"></div>
-    </div>
-    <div id="imageControls">
-      <div class="slider-row">
-        <label for="thresholdSlider" style="margin:0;white-space:nowrap">Threshold:</label>
-        <input type="range" id="thresholdSlider" min="0" max="255" value="128">
-        <span id="thresholdValue">128</span>
+
+      <!-- INPUT: Paste / Type Pattern (hidden initially) -->
+      <div class="sf-input-panel" id="inputText" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <label for="txtFileInput" style="margin:0;white-space:nowrap">Load .txt file:</label>
+          <span class="file-btn" id="txtFileBtn">Choose File</span><span class="file-name" id="txtFileName"></span>
+          <input type="file" id="txtFileInput" accept=".txt,text/plain">
+        </div>
+        <textarea id="textInput" placeholder="Enter pattern (24 chars per line)&#10;x = punch, - = blank&#10;&#10;Example:&#10;xx--xx--xx--xx--xx--xx--&#10;--xx--xx--xx--xx--xx--xx"></textarea>
+        <div id="textError" class="error"></div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Each line = 24 chars. <strong>x</strong> = punched, <strong>-</strong> = blank.</p>
       </div>
-      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 4px">Cells darker than this value are marked as punched. 128 = 50% grey. Lower values require darker cells to count as filled; raise if scanned pages have grey backgrounds.</p>
-      <div class="checkbox-row">
-        <label><input type="checkbox" id="invertToggle"> Invert (light = punch)</label>
+
+      <!-- INPUT: Blank Canvas (hidden initially) -->
+      <div class="sf-input-panel" id="inputBlank" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label for="blankRows" style="margin:0;white-space:nowrap">Rows:</label>
+          <input type="number" id="blankRows" min="1" max="200" value="20" style="width:70px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
+          <button id="createBlankBtn" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit">Create</button>
+        </div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">Creates an empty card. Click cells to design your pattern.</p>
       </div>
-      <p style="font-size:0.75rem;color:var(--muted);margin:-4px 0 8px">Check this if your chart uses light/white marks for punched holes on a dark background.</p>
+
+      <!-- DIVIDER -->
+      <div class="sf-panel-divider"></div>
+
+      <!-- SECTION: Export -->
+      <div class="sf-section" id="sectionExport">
+        <div class="sf-section-header" data-section="sectionExport">
+          <span class="sf-section-title"><span class="sf-sec-icon">📤</span> Export</span>
+          <span class="sf-section-chevron">▼</span>
+        </div>
+        <div class="sf-section-body">
+
+          <!-- Machine & Pattern section -->
+          <div class="sf-export-section">
+            <div class="sf-export-row">
+              <label for="machineProfile" class="sf-export-label">Offset</label>
+              <select id="machineProfile" class="sf-export-select">
+                <option value="0">None (no offset)</option>
+                <option value="5">Singer / Silver Reed (+5)</option>
+                <option value="7">Brother (+7)</option>
+                <option value="9">Toyota (+9)</option>
+              </select>
+            </div>
+            <div class="sf-export-row">
+              <label class="sf-export-label sf-export-check">
+                <input type="checkbox" id="jacquardToggle"> Double Bed Jacquard
+              </label>
+            </div>
+            <div class="sf-export-row">
+              <label for="repeatCount" class="sf-export-label">Repeats</label>
+              <input type="number" id="repeatCount" min="1" max="50" value="1" class="sf-export-input-sm">
+            </div>
+          </div>
+
+          <div class="sf-export-divider"></div>
+
+          <!-- Annotations section -->
+          <div class="sf-export-section">
+            <div class="sf-export-row">
+              <label class="sf-export-label sf-export-check">
+                <input type="checkbox" id="rowNumbersToggle"> Print row numbers
+              </label>
+            </div>
+            <div class="sf-export-row">
+              <label for="cardTitleInput" class="sf-export-label">Title</label>
+              <input type="text" id="cardTitleInput" placeholder="Card title" maxlength="80" class="sf-export-input">
+            </div>
+            <div class="sf-export-row">
+              <label for="fontPicker" class="sf-export-label">Font</label>
+              <select id="fontPicker" class="sf-export-select">
+                <option value="Verdana, Geneva, sans-serif">Verdana</option>
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                <option value="'Courier New', Courier, monospace">Courier New</option>
+                <option value="Georgia, serif">Georgia</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sf-export-divider"></div>
+
+          <!-- Generate & Download -->
+          <div class="sf-export-actions">
+            <button id="generateBtn" class="sf-btn-primary" disabled>Generate SVG</button>
+          </div>
+          <p id="svgColNote" style="display:none;font-size:0.75rem;color:var(--error);margin-top:4px">SVG export requires 24 columns.</p>
+          <div id="svgPreviewWrap" style="display:none">
+            <div id="svgPreviewThumb" class="sf-svg-preview"></div>
+          </div>
+          <div class="sf-export-actions sf-export-downloads" id="downloadActions" style="display:none">
+            <button id="downloadCutBtn" class="dl-btn" disabled>✂ Cut SVG</button>
+            <button id="downloadDrawBtn" class="dl-btn" disabled>✏ Draw SVG</button>
+            <button id="downloadCombinedBtn" class="dl-btn" disabled>📄 Combined SVG</button>
+          </div>
+          <div class="sf-export-actions">
+            <button id="exportPngBtn" class="dl-btn" disabled>🖼 Export Grid as PNG</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECTION: Settings -->
+      <div class="sf-section collapsed" id="sectionSettings">
+        <div class="sf-section-header" data-section="sectionSettings">
+          <span class="sf-section-title"><span class="sf-sec-icon">⚙️</span> Settings</span>
+          <span class="sf-section-chevron">▼</span>
+        </div>
+        <div class="sf-section-body">
+          <div class="sf-settings-group">
+            <label class="sf-settings-label" for="overlayModeSelect">Cell overlay</label>
+            <select id="overlayModeSelect" class="sf-export-input-sm">
+              <option value="none">None</option>
+              <option value="colnums">Column numbers</option>
+              <option value="punchdots">Punch indicator</option>
+            </select>
+          </div>
+          <div class="sf-export-divider"></div>
+          <div class="sf-settings-group">
+            <label class="sf-settings-label" for="stitchCountInput">Columns (stitch count)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="stitchCountInput" min="1" max="200" value="24" class="sf-export-input-sm" style="width:64px">
+            </div>
+            <p style="font-size:0.75rem;color:var(--muted);margin-top:4px">Changing this clears the canvas. SVG export requires 24 columns.</p>
+          </div>
+          <div class="sf-export-divider"></div>
+          <div class="sf-settings-group">
+            <button id="resetAllSettings" class="sf-toolbar-btn" style="color:var(--error);border-color:var(--error);width:100%">Reset All Settings</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sf-left-panel -->
+
+    <!-- Resize handle: left ↔ center -->
+    <div class="sf-resize-handle" id="resizeLeft" title="Drag to resize"></div>
+
+    <!-- ========== CENTER — Design Canvas ========== -->
+    <div class="sf-canvas-area">
+      <div id="previewContainer" class="sf-canvas-card">
+        <!-- Empty state / onboarding -->
+        <div id="canvasEmptyState" class="sf-empty-state" style="display:none">
+          <p class="sf-empty-icon">✦</p>
+          <p class="sf-empty-title">Start designing</p>
+          <p class="sf-empty-hint">Draw on the grid below, import an image from the left panel, or browse the pattern library on the right.</p>
+        </div>
+
+        <!-- Canvas toolbar: action buttons above the grid -->
+        <div id="canvasToolbar" class="sf-canvas-toolbar">
+          <div class="sf-canvas-toolbar-left">
+            <button id="undoBtn" class="sf-canvas-tool-btn" title="Undo (Ctrl+Z)">↩ Undo</button>
+            <button id="redoBtn" class="sf-canvas-tool-btn" title="Redo (Ctrl+Shift+Z)">↪ Redo</button>
+            <button id="invertGridBtn" class="sf-canvas-tool-btn" title="Invert all punched cells" style="display:none">⬜ Invert</button>
+          </div>
+          <div class="sf-canvas-toolbar-right">
+            <span id="activePaintChip" class="sf-paint-chip" title="Active paint color" style="display:none"></span>
+            <button id="fullscreenPreviewBtn" class="sf-canvas-tool-btn" title="Fullscreen preview (5× repeat)">🔍 Preview</button>
+          </div>
+        </div>
+
+        <!-- Palette (now lives above the grid in center) -->
+        <div id="canvasPalette" class="sf-canvas-palette">
+          <div class="pg-palette-section" style="margin:0;border:none;padding:0;background:none">
+            <div class="pg-palette-header">
+              <span class="sf-canvas-palette-label">🎨 Palette</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button id="pgPaletteAddBtn" class="pg-palette-add-btn">+ Add Color</button>
+                <button id="pgPaletteClearBtn" class="pg-palette-add-btn" style="display:none;color:var(--error);border-color:var(--error)">Clear All</button>
+              </div>
+              <input type="color" id="pgPaletteColorInput" value="#5b8597" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
+            </div>
+            <div id="pgPaletteSwatches" class="pg-palette-swatches">
+              <span class="pg-palette-empty" id="pgPaletteEmpty">Add colors to build your palette</span>
+            </div>
+            <div class="pg-palette-import">
+              <button id="pgImportToggle" class="pg-palette-import-toggle">Import from Coolors</button>
+              <div id="pgImportArea" class="pg-palette-import-area">
+                <textarea id="pgImportInput" placeholder="Paste a Coolors URL or CSS hex values&#10;&#10;e.g. https://coolors.co/f94144-f3722c-f8961e&#10;or   --red: #f94144ff; --orange: #f3722c;"></textarea>
+                <div class="pg-palette-import-row">
+                  <button id="pgImportBtn" class="pg-palette-import-btn">Import</button>
+                  <span id="pgImportMsg" class="pg-palette-import-msg"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid editing options -->
+        <p id="previewHint" style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;display:none">Click any cell to toggle.</p>
+        <div class="checkbox-row" id="editRowsToggleRow" style="margin-bottom:8px;display:none">
+          <label><input type="checkbox" id="editRowsToggle"> Edit rows (add / delete)</label>
+        </div>
+        <!-- Paint mode is always on — colors selected in palette above -->
+        <div id="previewGrid"></div>
+        <div id="rowCount"></div>
+
+        <!-- 5× Repeat Preview (below the grid) -->
+        <div id="repeatPreview" class="sf-repeat-preview" style="display:none">
+          <div class="sf-repeat-preview-label">Pattern repeat (5×):</div>
+          <div id="repeatPreviewGrid" class="sf-repeat-preview-grid"></div>
+        </div>
+      </div>
     </div>
-    <div class="checkbox-row" id="gridOverlayToggleRow" style="margin-bottom:8px;display:none">
-      <label><input type="checkbox" id="gridOverlayToggle"> Show grid overlay on source image</label>
-    </div>
-  </section>
 
-  <div id="previewContainer">
-    <h2>Pattern Preview</h2>
-    <p id="previewHint" style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;display:none">Click any cell to toggle it between punched (dark) and blank. The grey rows at top and bottom are lead-in/lead-out rows and cannot be edited.</p>
-    <div class="checkbox-row" id="colNumToggleRow" style="margin-bottom:8px;display:none">
-      <label><input type="checkbox" id="colNumToggle"> Show column numbers on punched cells</label>
-    </div>
-    <div class="checkbox-row" id="editRowsToggleRow" style="margin-bottom:8px;display:none">
-      <label><input type="checkbox" id="editRowsToggle"> Edit rows (add / delete)</label>
-    </div>
-    <div id="previewGrid"></div>
-    <div id="rowCount"></div>
-  </div>
+    <!-- Resize handle: center ↔ right -->
+    <div class="sf-resize-handle" id="resizeRight" title="Drag to resize"></div>
 
-  <section id="outputOptionsSection">
-    <h2 style="font-size:1rem;font-weight:700;margin-bottom:12px">Output Options</h2>
+    <!-- ========== RIGHT PANEL — Pattern Library (unified) ========== -->
+    <div class="sf-right-panel" id="rightPanel">
 
-    <div class="checkbox-row" style="margin-bottom:12px">
-      <label><input type="checkbox" id="jacquardToggle"> Double Bed Jacquard (each row becomes two: original + inverse)</label>
-    </div>
+      <!-- SECTION: Pattern Library (Browse + Compose unified) -->
+      <div class="sf-section" id="sectionLibrary">
+        <div class="sf-section-header" data-section="sectionLibrary">
+          <span class="sf-section-title"><span class="sf-sec-icon">📚</span> Pattern Library</span>
+          <span class="sf-section-chevron">▼</span>
+        </div>
+        <div class="sf-section-body">
 
-    <hr style="border:none;border-top:1px solid rgba(126,110,94,0.15);margin-bottom:12px">
+          <!-- Category filter + search -->
+          <div id="pgCatFilter" class="pg-cat-bar">
+            <button class="pg-cat-btn active" data-cat="all">All</button>
+          </div>
+          <input type="text" id="pgFragSearch" class="sf-search-input" placeholder="Search patterns...">
+          <p class="sf-hint">Click a pattern to add it to your sequence below.</p>
+          <div id="pgFragGrid" class="pg-frag-grid"></div>
 
-    <label style="margin-bottom:6px">Machine Type (row offset)</label>
-    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:10px">Shifts the top rows to the bottom so your pattern lines up correctly for your machine.</p>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
-      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
-        <input type="radio" name="machineOffset" value="0" checked style="accent-color:var(--accent)"> No shift
-      </label>
-      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
-        <input type="radio" name="machineOffset" value="5" style="accent-color:var(--accent)"> Singer / Silver Reed (shift 5 rows)
-      </label>
-      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
-        <input type="radio" name="machineOffset" value="7" style="accent-color:var(--accent)"> Brother (shift 7 rows)
-      </label>
-      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;margin:0">
-        <input type="radio" name="machineOffset" value="9" style="accent-color:var(--accent)"> Toyota (shift 9 rows)
-      </label>
-    </div>
+          <!-- Composition: build sequence with colors -->
+          <div class="sf-comp-section">
+            <div class="sf-comp-header">
+              <span class="sf-comp-header-label">Your Sequence</span>
+              <span id="pgTotalRows" class="pg-total-rows"></span>
+            </div>
+            <div id="pgCompList" class="pg-comp-list">
+              <p id="pgCompEmpty" class="pg-comp-empty">Click a pattern above to start building</p>
+            </div>
+            <div id="pgCompControls" class="pg-comp-controls" style="display:none">
+              <button id="pgClearAll" class="pg-clear-btn">Clear All</button>
+            </div>
+            <div class="pg-apply-row">
+              <button id="pgAddTopBtn" class="pg-apply-btn" disabled>Add to Top ↑</button>
+              <button id="pgAddBottomBtn" class="pg-apply-btn" disabled>Add to Bottom ↓</button>
+              <button id="pgReplaceBtn" class="pg-apply-btn pg-replace-btn" disabled>Replace ⟲</button>
+            </div>
+          </div>
 
-    <hr style="border:none;border-top:1px solid rgba(126,110,94,0.15);margin-bottom:12px">
+        </div>
+      </div>
 
-    <div style="display:flex;align-items:center;gap:8px">
-      <label for="repeatCount" style="margin:0;white-space:nowrap">Pattern repeats:</label>
-      <input type="number" id="repeatCount" min="1" max="50" value="1" style="width:60px;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:1rem">
-    </div>
+    </div><!-- /sf-right-panel -->
 
-    <hr style="border:none;border-top:1px solid rgba(126,110,94,0.15);margin:12px 0">
+  </div><!-- /sf-main -->
 
-    <label style="margin-bottom:6px">SVG Text Annotations</label>
-    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:10px">Add text printed on the card. Row numbers count from bottom up. Text is in a separate draw layer for Cricut pen pass.</p>
-
-    <div class="checkbox-row" style="margin-bottom:10px">
-      <label><input type="checkbox" id="rowNumbersToggle"> Print row numbers</label>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <label for="cardTitleInput" style="margin:0;white-space:nowrap">Card title:</label>
-      <input type="text" id="cardTitleInput" placeholder="" maxlength="80" style="flex:1;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:0.9rem;font-family:inherit">
-    </div>
-
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <label for="fontPicker" style="margin:0;white-space:nowrap">Font:</label>
-      <select id="fontPicker" style="flex:1;padding:6px;border:1px solid var(--copper);border-radius:6px;font-size:0.9rem;font-family:inherit;background:#fff">
-        <option value="Verdana, Geneva, sans-serif" style="font-family:Verdana,Geneva,sans-serif">Verdana</option>
-        <option value="Arial, Helvetica, sans-serif" style="font-family:Arial,Helvetica,sans-serif">Arial</option>
-        <option value="'Times New Roman', Times, serif" style="font-family:'Times New Roman',Times,serif">Times New Roman</option>
-        <option value="'Courier New', Courier, monospace" style="font-family:'Courier New',Courier,monospace">Courier New</option>
-        <option value="Georgia, serif" style="font-family:Georgia,serif">Georgia</option>
-      </select>
-    </div>
-  </section>
-
-  <div class="actions">
-    <button id="generateBtn" disabled>Generate SVG</button>
-  </div>
-  <div class="actions" id="downloadActions" style="display:none">
-    <button id="downloadCutBtn" class="dl-btn" disabled>Cut SVG</button>
-    <button id="downloadDrawBtn" class="dl-btn" disabled>Draw SVG</button>
-    <button id="downloadCombinedBtn" class="dl-btn" disabled>Combined SVG</button>
+  <!-- ===== STATUS BAR ===== -->
+  <div class="sf-status-bar" id="statusBar">
+    <span id="statusText"></span>
   </div>
 
   <div id="svgOutput"></div>
 
-  <script>
-    // === CONSTANTS ===
-    const PATTERN_COLS = [
-      19.25, 23.75, 28.25, 32.75, 37.25, 41.75, 46.25, 50.75,
-      55.25, 59.75, 64.25, 68.75, 73.25, 77.75, 82.25, 86.75,
-      91.25, 95.75, 100.25, 104.75, 109.25, 113.75, 118.25, 122.75
-    ];
-    const EDGE_GUIDE_X = [13.5, 128.5];
-    const TRANSPORT_X = [6.75, 135.25];
-    const PATTERN_R = 1.75;
-    const EDGE_R = 1.5;
-    const TRANSPORT_R = 1.75;
-    const CARD_WIDTH = 142.0;
-    const STROKE_W = 0.1;
-
-    // === STATE ===
-    let currentMode = 'image';
-    let currentGrid = [];
-    let originalImageData = null;
-    let imageWidth = 24;
-    let imageHeight = 0;
-    let generatedSVGString = null;
-    let imageProcessingMode = 'simple';
-    let sourceImage = null;
-    let cropRect = { x: 0, y: 0, w: 1, h: 1 };
-    let cropDragState = null;
-    let detectedCells = null;
-    let chartScanImageData = null;
-    let gridOverlayInfo = null; // { img, cols, rows, cropRect? }
-
-    // === DOM REFS ===
-    const textModeBtn = document.getElementById('textModeBtn');
-    const imageModeBtn = document.getElementById('imageModeBtn');
-    const blankModeBtn = document.getElementById('blankModeBtn');
-    const textSection = document.getElementById('textSection');
-    const imageSection = document.getElementById('imageSection');
-    const blankSection = document.getElementById('blankSection');
-    const blankRows = document.getElementById('blankRows');
-    const createBlankBtn = document.getElementById('createBlankBtn');
-    const txtFileInput = document.getElementById('txtFileInput');
-    const textInput = document.getElementById('textInput');
-    const textError = document.getElementById('textError');
-    const imageInput = document.getElementById('imageInput');
-    const hiddenCanvas = document.getElementById('hiddenCanvas');
-    const analysisCanvas = document.getElementById('analysisCanvas');
-    const imageModeToggle = document.getElementById('imageModeToggle');
-    const simpleModeBtn = document.getElementById('simpleModeBtn');
-    const chartScanBtn = document.getElementById('chartScanBtn');
-    const simplePreviewContainer = document.getElementById('simplePreviewContainer');
-    const simplePreviewImg = document.getElementById('simplePreviewImg');
-    const cropContainer = document.getElementById('cropContainer');
-    const cropCanvas = document.getElementById('cropCanvas');
-    const chartScanControls = document.getElementById('chartScanControls');
-    const sampleSlider = document.getElementById('sampleSlider');
-    const sampleValueEl = document.getElementById('sampleValue');
-    const chartRowsInput = document.getElementById('chartRows');
-    const detectGridBtn = document.getElementById('detectGridBtn');
-    const gridStatus = document.getElementById('gridStatus');
-    const imageModeHint = document.getElementById('imageModeHint');
-    const imageControls = document.getElementById('imageControls');
-    const thresholdSlider = document.getElementById('thresholdSlider');
-    const thresholdValue = document.getElementById('thresholdValue');
-    const invertToggle = document.getElementById('invertToggle');
-    const previewGrid = document.getElementById('previewGrid');
-    const rowCount = document.getElementById('rowCount');
-    const previewHint = document.getElementById('previewHint');
-    const generateBtn = document.getElementById('generateBtn');
-    const downloadCutBtn = document.getElementById('downloadCutBtn');
-    const downloadDrawBtn = document.getElementById('downloadDrawBtn');
-    const downloadCombinedBtn = document.getElementById('downloadCombinedBtn');
-    const downloadActions = document.getElementById('downloadActions');
-    const svgOutput = document.getElementById('svgOutput');
-    const jacquardToggle = document.getElementById('jacquardToggle');
-    const refreshAllBtn = document.getElementById('refreshAllBtn');
-
-    // === CUSTOM FILE BUTTONS ===
-    document.getElementById('imageInputBtn').addEventListener('click', () => imageInput.click());
-    document.getElementById('txtFileBtn').addEventListener('click', () => txtFileInput.click());
-    imageInput.addEventListener('change', function() {
-      document.getElementById('imageFileName').textContent = this.files[0] ? this.files[0].name : '';
-    });
-    txtFileInput.addEventListener('change', function() {
-      document.getElementById('txtFileName').textContent = this.files[0] ? this.files[0].name : '';
-    });
-
-    // === REFRESH ALL ===
-    refreshAllBtn.addEventListener('click', () => {
-      // Reset state
-      currentGrid = [];
-      originalImageData = null;
-      imageHeight = 0;
-      generatedSVGString = null;
-      imageProcessingMode = 'simple';
-      sourceImage = null;
-      cropRect = { x: 0, y: 0, w: 1, h: 1 };
-      cropDragState = null;
-      detectedCells = null;
-      chartScanImageData = null;
-
-      // Reset text input
-      textInput.value = '';
-      textError.textContent = '';
-      txtFileInput.value = '';
-
-      // Reset image input
-      imageInput.value = '';
-      document.getElementById('imageFileName').textContent = '';
-      document.getElementById('txtFileName').textContent = '';
-      imageControls.style.display = 'none';
-      simplePreviewContainer.classList.add('hidden');
-      cropContainer.classList.add('hidden');
-      cropContainer.style.display = '';
-      chartScanControls.classList.add('hidden');
-      chartScanControls.style.display = '';
-      thresholdSlider.value = 128;
-      thresholdValue.textContent = '128';
-      invertToggle.checked = false;
-      sampleSlider.value = 40;
-      sampleValueEl.textContent = '40%';
-      chartRowsInput.value = '';
-      gridStatus.textContent = '';
-
-      // Reset image mode toggle and sub-mode buttons
-      imageModeToggle.classList.add('hidden');
-      imageModeToggle.style.display = '';
-      imageModeHint.classList.add('hidden');
-      imageModeHint.style.display = '';
-      simpleModeBtn.classList.add('active');
-      chartScanBtn.classList.remove('active');
-
-      // Clear crop canvas
-      cropCanvas.getContext('2d').clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-
-      // Reset jacquard, machine offset, repeats, column numbers, grid overlay, and blank card
-      jacquardToggle.checked = false;
-      document.querySelector('input[name="machineOffset"][value="0"]').checked = true;
-      document.getElementById('repeatCount').value = 1;
-      document.getElementById('colNumToggle').checked = false;
-      document.getElementById('colNumToggleRow').style.display = 'none';
-      previewGrid.classList.remove('show-col-nums');
-      document.getElementById('editRowsToggle').checked = false;
-      document.getElementById('editRowsToggleRow').style.display = 'none';
-      previewGrid.classList.remove('edit-rows');
-      document.getElementById('gridOverlayToggle').checked = false;
-      document.getElementById('gridOverlayToggleRow').style.display = 'none';
-      gridOverlayInfo = null;
-      blankRows.value = 20;
-      document.getElementById('rowNumbersToggle').checked = false;
-      document.getElementById('cardTitleInput').value = '';
-      document.getElementById('fontPicker').selectedIndex = 0;
-
-      // Reset preview and output
-      previewGrid.innerHTML = '';
-      rowCount.textContent = '';
-      previewHint.style.display = 'none';
-      svgOutput.innerHTML = '';
-      generateBtn.disabled = true;
-      downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
-
-      // Reset to image mode
-      setMode('image');
-    });
-
-    // === MODE TOGGLE ===
-    function setMode(mode) {
-      currentMode = mode;
-      textModeBtn.classList.toggle('active', mode === 'text');
-      imageModeBtn.classList.toggle('active', mode === 'image');
-      blankModeBtn.classList.toggle('active', mode === 'blank');
-      textSection.classList.toggle('hidden', mode !== 'text');
-      imageSection.classList.toggle('hidden', mode !== 'image');
-      blankSection.classList.toggle('hidden', mode !== 'blank');
-    }
-
-    textModeBtn.addEventListener('click', () => {
-      setMode('text');
-      if (currentGrid.length > 0 && !textInput.value.trim()) {
-        textInput.value = currentGrid.join('\n');
-      }
-      handleTextChange();
-    });
-
-    imageModeBtn.addEventListener('click', () => {
-      setMode('image');
-      if (sourceImage) {
-        if (imageProcessingMode === 'simple') {
-          runSimpleMode(sourceImage);
-        } else {
-          initChartScanMode(sourceImage);
-        }
-      } else if (originalImageData) {
-        processImage();
-      } else {
-        currentGrid = [];
-        renderPreview([]);
-        generateBtn.disabled = true;
-      }
-    });
-
-    blankModeBtn.addEventListener('click', () => {
-      setMode('blank');
-      if (currentGrid.length === 0) {
-        createBlankGrid();
-      } else {
-        renderPreview(currentGrid);
-        generateBtn.disabled = false;
-      }
-    });
-
-    function createBlankGrid() {
-      const rows = Math.max(1, Math.min(200, parseInt(blankRows.value) || 20));
-      blankRows.value = rows;
-      currentGrid = Array.from({ length: rows }, () => '------------------------');
-      renderPreview(currentGrid);
-      generateBtn.disabled = false;
-    }
-
-    createBlankBtn.addEventListener('click', createBlankGrid);
-
-    // === TEXT INPUT MODE ===
-    let textDebounce = null;
-    textInput.addEventListener('input', () => {
-      clearTimeout(textDebounce);
-      textDebounce = setTimeout(handleTextChange, 300);
-    });
-
-    txtFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        textInput.value = ev.target.result.replace(/\r/g, '');
-        handleTextChange();
-        txtFileInput.value = '';
-      };
-      reader.readAsText(file);
-    });
-
-    function handleTextChange() {
-      if (currentMode !== 'text') return;
-      const text = textInput.value;
-      if (!text.trim()) {
-        currentGrid = [];
-        textError.textContent = '';
-        renderPreview([]);
-        generateBtn.disabled = true;
-        return;
-      }
-      const { grid, errors } = parseTextInput(text);
-      textError.textContent = errors.join('\n');
-      if (errors.length === 0) {
-        currentGrid = grid;
-        renderPreview(grid);
-        generateBtn.disabled = false;
-      } else {
-        currentGrid = [];
-        renderPreview([]);
-        generateBtn.disabled = true;
-      }
-    }
-
-    function parseTextInput(text) {
-      const lines = text.split('\n');
-      const errors = [];
-      const grid = [];
-
-      // Remove trailing empty lines
-      while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
-        lines.pop();
-      }
-
-      if (lines.length === 0) {
-        errors.push('At least 1 row is required.');
-        return { grid, errors };
-      }
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].toLowerCase().replace(/\s+$/, '');
-        if (line.length !== 24) {
-          errors.push('Line ' + (i + 1) + ': expected 24 characters, got ' + line.length);
-        }
-        if (!/^[x\-]+$/.test(line)) {
-          errors.push('Line ' + (i + 1) + ': only \'x\' and \'-\' characters allowed');
-        }
-        grid.push(line.padEnd(24, '-').substring(0, 24));
-      }
-
-      return { grid, errors };
-    }
-
-    // === IMAGE UPLOAD MODE ===
-    imageInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const img = new Image();
-        img.onload = () => {
-          sourceImage = img;
-          imageModeToggle.classList.remove('hidden');
-          imageModeToggle.style.display = 'flex';
-          imageModeHint.classList.remove('hidden');
-          if (imageProcessingMode === 'simple') {
-            runSimpleMode(img);
-          } else {
-            initChartScanMode(img);
-          }
-        };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    function runSimpleMode(img) {
-      cropContainer.classList.add('hidden');
-      chartScanControls.classList.add('hidden');
-      gridStatus.textContent = '';
-      imageControls.style.display = 'block';
-      simplePreviewImg.src = img.src;
-      simplePreviewContainer.classList.remove('hidden');
-      const targetWidth = 24;
-      const aspect = img.height / img.width;
-      const targetHeight = Math.round(targetWidth * aspect);
-      imageWidth = targetWidth;
-      imageHeight = targetHeight;
-      const ctx = hiddenCanvas.getContext('2d');
-      hiddenCanvas.width = targetWidth;
-      hiddenCanvas.height = targetHeight;
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-      originalImageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
-      processImage();
-    }
-
-    function initChartScanMode(img) {
-      simplePreviewContainer.classList.add('hidden');
-      cropContainer.classList.remove('hidden');
-      chartScanControls.classList.remove('hidden');
-      imageControls.style.display = 'block';
-      cropRect = { x: 0, y: 0, w: 1, h: 1 };
-      detectedCells = null;
-      chartScanImageData = null;
-      gridOverlayInfo = null;
-      gridOverlayToggle.checked = false;
-      gridOverlayToggleRow.style.display = 'none';
-      drawCrop();
-    }
-
-    simpleModeBtn.addEventListener('click', () => {
-      imageProcessingMode = 'simple';
-      simpleModeBtn.classList.add('active');
-      chartScanBtn.classList.remove('active');
-      if (sourceImage) runSimpleMode(sourceImage);
-    });
-
-    chartScanBtn.addEventListener('click', () => {
-      imageProcessingMode = 'chartScan';
-      chartScanBtn.classList.add('active');
-      simpleModeBtn.classList.remove('active');
-      if (sourceImage) initChartScanMode(sourceImage);
-    });
-
-    thresholdSlider.addEventListener('input', () => {
-      thresholdValue.textContent = thresholdSlider.value;
-      if (imageProcessingMode === 'simple' && originalImageData) {
-        processImage();
-      } else if (imageProcessingMode === 'chartScan' && detectedCells && chartScanImageData) {
-        reprocessChartScan();
-      }
-    });
-
-    invertToggle.addEventListener('change', () => {
-      if (imageProcessingMode === 'simple' && originalImageData) {
-        processImage();
-      } else if (imageProcessingMode === 'chartScan' && detectedCells && chartScanImageData) {
-        reprocessChartScan();
-      }
-    });
-
-    sampleSlider.addEventListener('input', () => {
-      sampleValueEl.textContent = sampleSlider.value + '%';
-      if (detectedCells && chartScanImageData) {
-        reprocessChartScan();
-      }
-    });
-
-    function reprocessChartScan() {
-      const ratio = parseInt(sampleSlider.value) / 100;
-      const threshold = parseInt(thresholdSlider.value);
-      const invert = invertToggle.checked;
-      const grid = processChartScanGrid(chartScanImageData, detectedCells, threshold, invert, ratio);
-      currentGrid = grid;
-      renderPreview(grid);
-      generateBtn.disabled = false;
-    }
-
-    function processImage() {
-      if (!originalImageData) return;
-      const threshold = parseInt(thresholdSlider.value);
-      const invert = invertToggle.checked;
-      const pixels = originalImageData.data;
-      const grid = [];
-
-      for (let row = 0; row < imageHeight; row++) {
-        let line = '';
-        for (let col = 0; col < 24; col++) {
-          const idx = (row * 24 + col) * 4;
-          const r = pixels[idx];
-          const g = pixels[idx + 1];
-          const b = pixels[idx + 2];
-          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-          const isDark = luminance < threshold;
-          const isPunched = invert ? !isDark : isDark;
-          line += isPunched ? 'x' : '-';
-        }
-        grid.push(line);
-      }
-
-      currentGrid = grid;
-      renderPreview(grid);
-      generateBtn.disabled = false;
-
-      // Update grid overlay for simple mode
-      if (imageProcessingMode === 'simple' && sourceImage) {
-        gridOverlayInfo = { img: sourceImage, cols: 24, rows: imageHeight, cropRect: null };
-        document.getElementById('gridOverlayToggleRow').style.display = '';
-        drawGridOverlay();
-      }
-    }
-
-    // === GRID OVERLAY ===
-    var simpleGridOverlay = document.getElementById('simpleGridOverlay');
-    var gridOverlayToggle = document.getElementById('gridOverlayToggle');
-    var gridOverlayToggleRow = document.getElementById('gridOverlayToggleRow');
-
-    function drawGridLines(ctx, x0, y0, w, h, cols, rows) {
-      ctx.strokeStyle = 'rgba(255, 80, 80, 0.6)';
-      ctx.lineWidth = 1;
-      var colStep = w / cols;
-      var rowStep = h / rows;
-
-      for (var c = 0; c <= cols; c++) {
-        var x = Math.round(x0 + c * colStep) + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x, y0);
-        ctx.lineTo(x, y0 + h);
-        ctx.stroke();
-      }
-      for (var r = 0; r <= rows; r++) {
-        var y = Math.round(y0 + r * rowStep) + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x0, y);
-        ctx.lineTo(x0 + w, y);
-        ctx.stroke();
-      }
-
-      // Column numbers along top
-      var fontSize = Math.max(9, Math.min(14, Math.floor(colStep * 0.6)));
-      ctx.font = 'bold ' + fontSize + 'px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      for (var c = 0; c < cols; c++) {
-        var cx = x0 + (c + 0.5) * colStep;
-        var ty = y0 + 2;
-        var text = String(c + 1);
-        var tw = ctx.measureText(text).width;
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(cx - tw / 2 - 2, ty, tw + 4, fontSize + 2);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(text, cx, ty + 1);
-      }
-
-      // Row numbers along left
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      var rowFontSize = Math.max(8, Math.min(13, Math.floor(rowStep * 0.55)));
-      ctx.font = 'bold ' + rowFontSize + 'px sans-serif';
-      for (var r = 0; r < rows; r++) {
-        var cy = y0 + (r + 0.5) * rowStep;
-        var text = String(r + 1);
-        var tw = ctx.measureText(text).width;
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(x0 + 1, cy - rowFontSize / 2 - 1, tw + 4, rowFontSize + 2);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(text, x0 + 3, cy);
-      }
-    }
-
-    function drawSimpleGridOverlay() {
-      if (!gridOverlayInfo || !gridOverlayToggle.checked || imageProcessingMode !== 'simple') {
-        simpleGridOverlay.width = 0;
-        simpleGridOverlay.height = 0;
-        return;
-      }
-      var img = simplePreviewImg;
-      var w = img.naturalWidth;
-      var h = img.naturalHeight;
-      if (!w || !h) return;
-      simpleGridOverlay.width = w;
-      simpleGridOverlay.height = h;
-      var ctx = simpleGridOverlay.getContext('2d');
-      drawGridLines(ctx, 0, 0, w, h, gridOverlayInfo.cols, gridOverlayInfo.rows);
-    }
-
-    function drawGridOverlay() {
-      if (imageProcessingMode === 'simple') {
-        drawSimpleGridOverlay();
-      } else if (imageProcessingMode === 'chartScan') {
-        drawCrop();
-      }
-    }
-
-    gridOverlayToggle.addEventListener('change', drawGridOverlay);
-
-    // === CROP UI ===
-    function drawCrop() {
-      if (!sourceImage) return;
-      const containerWidth = cropContainer.clientWidth || 560;
-      const aspect = sourceImage.height / sourceImage.width;
-      const displayW = containerWidth;
-      const displayH = Math.round(containerWidth * aspect);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      cropCanvas.style.width = displayW + 'px';
-      cropCanvas.style.height = displayH + 'px';
-      cropCanvas.width = displayW * dpr;
-      cropCanvas.height = displayH * dpr;
-      const ctx = cropCanvas.getContext('2d');
-      ctx.scale(dpr, dpr);
-      ctx.drawImage(sourceImage, 0, 0, displayW, displayH);
-      const cx = cropRect.x * displayW;
-      const cy = cropRect.y * displayH;
-      const cw = cropRect.w * displayW;
-      const ch = cropRect.h * displayH;
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.fillRect(0, 0, displayW, cy);
-      ctx.fillRect(0, cy + ch, displayW, displayH - cy - ch);
-      ctx.fillRect(0, cy, cx, ch);
-      ctx.fillRect(cx + cw, cy, displayW - cx - cw, ch);
-      ctx.strokeStyle = '#ff6b9d';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cx, cy, cw, ch);
-      const hs = 12;
-      var handles = [
-        [cx, cy], [cx + cw, cy], [cx, cy + ch], [cx + cw, cy + ch],
-        [cx + cw / 2, cy], [cx + cw / 2, cy + ch],
-        [cx, cy + ch / 2], [cx + cw, cy + ch / 2]
-      ];
-      for (var hi = 0; hi < handles.length; hi++) {
-        // Clamp handle position so it stays inside the visible canvas area
-        var hx = Math.max(0, Math.min(displayW - hs, handles[hi][0] - hs / 2));
-        var hy = Math.max(0, Math.min(displayH - hs, handles[hi][1] - hs / 2));
-        ctx.fillStyle = '#ff6b9d';
-        ctx.fillRect(hx, hy, hs, hs);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(hx, hy, hs, hs);
-      }
-
-      // Draw grid overlay inside crop region if enabled
-      if (gridOverlayInfo && gridOverlayToggle.checked && imageProcessingMode === 'chartScan') {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(cx, cy, cw, ch);
-        ctx.clip();
-        drawGridLines(ctx, cx, cy, cw, ch, gridOverlayInfo.cols, gridOverlayInfo.rows);
-        ctx.restore();
-      }
-    }
-
-    function getCropPointerPos(e) {
-      const rect = cropCanvas.getBoundingClientRect();
-      return {
-        nx: (e.clientX - rect.left) / rect.width,
-        ny: (e.clientY - rect.top) / rect.height
-      };
-    }
-
-    function hitTestHandle(nx, ny) {
-      const tol = 0.04;
-      const cr = cropRect;
-      const cx = cr.x, cy = cr.y, cw = cr.w, ch = cr.h;
-      var corners = [
-        { id: 'tl', x: cx, y: cy }, { id: 'tr', x: cx + cw, y: cy },
-        { id: 'bl', x: cx, y: cy + ch }, { id: 'br', x: cx + cw, y: cy + ch }
-      ];
-      for (var i = 0; i < corners.length; i++) {
-        if (Math.abs(nx - corners[i].x) < tol && Math.abs(ny - corners[i].y) < tol)
-          return corners[i].id;
-      }
-      var edges = [
-        { id: 't', x: cx + cw / 2, y: cy }, { id: 'b', x: cx + cw / 2, y: cy + ch },
-        { id: 'l', x: cx, y: cy + ch / 2 }, { id: 'r', x: cx + cw, y: cy + ch / 2 }
-      ];
-      for (var i = 0; i < edges.length; i++) {
-        if (Math.abs(nx - edges[i].x) < tol && Math.abs(ny - edges[i].y) < tol)
-          return edges[i].id;
-      }
-      if (nx > cx && nx < cx + cw && ny > cy && ny < cy + ch) return 'move';
-      return null;
-    }
-
-    cropCanvas.addEventListener('pointerdown', (e) => {
-      const { nx, ny } = getCropPointerPos(e);
-      const handle = hitTestHandle(nx, ny);
-      if (!handle) return;
-      cropDragState = { handle: handle, startNx: nx, startNy: ny, startRect: Object.assign({}, cropRect) };
-      cropCanvas.setPointerCapture(e.pointerId);
-      e.preventDefault();
-    });
-
-    cropCanvas.addEventListener('pointermove', (e) => {
-      if (!cropDragState) return;
-      const { nx, ny } = getCropPointerPos(e);
-      const dx = nx - cropDragState.startNx;
-      const dy = ny - cropDragState.startNy;
-      const sr = cropDragState.startRect;
-      const minSize = 0.08;
-      var r = Object.assign({}, cropRect);
-      switch (cropDragState.handle) {
-        case 'move':
-          r.x = Math.max(0, Math.min(1 - sr.w, sr.x + dx));
-          r.y = Math.max(0, Math.min(1 - sr.h, sr.y + dy));
-          r.w = sr.w; r.h = sr.h;
-          break;
-        case 'tl':
-          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
-          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
-          r.w = sr.x + sr.w - r.x; r.h = sr.y + sr.h - r.y;
-          break;
-        case 'tr':
-          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
-          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
-          r.h = sr.y + sr.h - r.y;
-          break;
-        case 'bl':
-          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
-          r.w = sr.x + sr.w - r.x;
-          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
-          break;
-        case 'br':
-          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
-          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
-          break;
-        case 't':
-          r.y = Math.max(0, Math.min(sr.y + sr.h - minSize, sr.y + dy));
-          r.h = sr.y + sr.h - r.y;
-          break;
-        case 'b':
-          r.h = Math.max(minSize, Math.min(1 - sr.y, sr.h + dy));
-          break;
-        case 'l':
-          r.x = Math.max(0, Math.min(sr.x + sr.w - minSize, sr.x + dx));
-          r.w = sr.x + sr.w - r.x;
-          break;
-        case 'r':
-          r.w = Math.max(minSize, Math.min(1 - sr.x, sr.w + dx));
-          break;
-      }
-      cropRect = r;
-      drawCrop();
-      e.preventDefault();
-    });
-
-    cropCanvas.addEventListener('pointerup', () => { cropDragState = null; });
-    cropCanvas.addEventListener('pointercancel', () => { cropDragState = null; });
-
-    // === CHART SCAN: GRID DETECTION ===
-    function getCroppedImageData() {
-      const ctx = analysisCanvas.getContext('2d');
-      const sx = Math.round(cropRect.x * sourceImage.width);
-      const sy = Math.round(cropRect.y * sourceImage.height);
-      const sw = Math.max(1, Math.round(cropRect.w * sourceImage.width));
-      const sh = Math.max(1, Math.round(cropRect.h * sourceImage.height));
-      const analysisWidth = Math.min(sw, 1200);
-      const scale = analysisWidth / sw;
-      const analysisHeight = Math.max(1, Math.round(sh * scale));
-      analysisCanvas.width = analysisWidth;
-      analysisCanvas.height = analysisHeight;
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, analysisWidth, analysisHeight);
-      return ctx.getImageData(0, 0, analysisWidth, analysisHeight);
-    }
-
-    function computeProjections(imageData) {
-      var data = imageData.data, w = imageData.width, h = imageData.height;
-      var hProj = new Float32Array(h);
-      var vProj = new Float32Array(w);
-      for (var y = 0; y < h; y++) {
-        var sum = 0;
-        for (var x = 0; x < w; x++) {
-          var idx = (y * w + x) * 4;
-          var lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-          var darkness = 1.0 - lum / 255.0;
-          sum += darkness;
-          vProj[x] += darkness;
-        }
-        hProj[y] = sum / w;
-      }
-      for (var x = 0; x < w; x++) vProj[x] /= h;
-      return { hProj: hProj, vProj: vProj };
-    }
-
-    function boxSmooth(arr, radius) {
-      var result = new Float32Array(arr.length);
-      for (var i = 0; i < arr.length; i++) {
-        var sum = 0, count = 0;
-        for (var j = Math.max(0, i - radius); j <= Math.min(arr.length - 1, i + radius); j++) {
-          sum += arr[j]; count++;
-        }
-        result[i] = sum / count;
-      }
-      return result;
-    }
-
-    function findGridLines(profile) {
-      var smoothed = boxSmooth(profile, 3);
-      var n = smoothed.length;
-      if (n < 10) return null;
-      var mean = 0;
-      for (var i = 0; i < n; i++) mean += smoothed[i];
-      mean /= n;
-      var variance = 0;
-      for (var i = 0; i < n; i++) variance += (smoothed[i] - mean) * (smoothed[i] - mean);
-      var stddev = Math.sqrt(variance / n);
-      var peakThreshold = mean + 0.5 * stddev;
-      var candidates = [];
-      for (var i = 2; i < n - 2; i++) {
-        if (smoothed[i] > peakThreshold &&
-            smoothed[i] >= smoothed[i - 1] && smoothed[i] >= smoothed[i + 1] &&
-            smoothed[i] >= smoothed[i - 2] && smoothed[i] >= smoothed[i + 2]) {
-          candidates.push(i);
-        }
-      }
-      if (candidates.length < 3) return null;
-
-      // Try autocorrelation first — more robust to missing/doubled peaks
-      var period = estimatePeriodAutocorrelation(smoothed);
-      // Fall back to peak-gap-median if autocorrelation fails
-      if (!period || period < 5) {
-        period = estimatePeriod(candidates);
-      }
-      if (!period || period < 5) return null;
-      return buildRegularGrid(candidates, period, n);
-    }
-
-    function estimatePeriod(candidates) {
-      var gaps = [];
-      for (var i = 1; i < candidates.length; i++) gaps.push(candidates[i] - candidates[i - 1]);
-      if (gaps.length === 0) return null;
-      gaps.sort(function(a, b) { return a - b; });
-      var median = gaps[Math.floor(gaps.length / 2)];
-      var filtered = gaps.filter(function(g) { return Math.abs(g - median) < median * 0.4; });
-      if (filtered.length === 0) return median;
-      var sum = 0;
-      for (var i = 0; i < filtered.length; i++) sum += filtered[i];
-      return sum / filtered.length;
-    }
-
-    function estimatePeriodAutocorrelation(profile) {
-      // Compute autocorrelation of the projection profile to find the
-      // dominant period. This is far more robust than peak-gap-median
-      // because it uses the entire signal, tolerating missing/doubled lines.
-      var n = profile.length;
-      if (n < 20) return null;
-
-      // Subtract mean so autocorrelation measures periodicity, not DC offset
-      var mean = 0;
-      for (var i = 0; i < n; i++) mean += profile[i];
-      mean /= n;
-      var centered = new Float32Array(n);
-      for (var i = 0; i < n; i++) centered[i] = profile[i] - mean;
-
-      // Search lags from 5px up to n/3 (we need at least 3 repetitions)
-      var minLag = 5;
-      var maxLag = Math.floor(n / 3);
-      if (maxLag <= minLag) return null;
-
-      var acorr = new Float32Array(maxLag + 1);
-      // Normalization: autocorrelation at lag 0
-      var ac0 = 0;
-      for (var i = 0; i < n; i++) ac0 += centered[i] * centered[i];
-      if (ac0 === 0) return null;
-
-      for (var lag = minLag; lag <= maxLag; lag++) {
-        var sum = 0;
-        for (var i = 0; i < n - lag; i++) {
-          sum += centered[i] * centered[i + lag];
-        }
-        acorr[lag] = sum / ac0;
-      }
-
-      // Find the first prominent peak in the autocorrelation.
-      // Walk past the initial dip to avoid picking up sub-period noise.
-      // First, find where acorr dips below 0 (or its minimum before rising)
-      var searchStart = minLag;
-      for (var i = minLag; i < maxLag; i++) {
-        if (acorr[i] < acorr[i + 1]) {
-          searchStart = i;
-          break;
-        }
-      }
-
-      // Now find the highest peak from searchStart onward
-      var bestLag = -1;
-      var bestVal = 0;
-      for (var i = searchStart + 1; i < maxLag; i++) {
-        if (acorr[i] > bestVal &&
-            acorr[i] >= acorr[i - 1] && acorr[i] >= acorr[i + 1]) {
-          bestVal = acorr[i];
-          bestLag = i;
-          // Only take the first clear peak — it's the fundamental period
-          // Require a minimum correlation strength
-          if (bestVal > 0.15) break;
-        }
-      }
-
-      if (bestLag < minLag || bestVal < 0.05) return null;
-
-      // Parabolic interpolation for sub-pixel accuracy
-      if (bestLag > minLag && bestLag < maxLag) {
-        var a = acorr[bestLag - 1];
-        var b = acorr[bestLag];
-        var c = acorr[bestLag + 1];
-        var denom = 2 * (2 * b - a - c);
-        if (denom !== 0) {
-          var offset = (a - c) / denom;
-          if (Math.abs(offset) < 0.5) {
-            return bestLag + offset;
-          }
-        }
-      }
-
-      return bestLag;
-    }
-
-    function buildRegularGrid(candidates, period, totalLength) {
-      var bestLines = null, bestScore = -1;
-      var startCount = Math.min(candidates.length, 5);
-      for (var s = 0; s < startCount; s++) {
-        var lines = [candidates[s]];
-        var score = 1;
-        var pos = candidates[s] + period;
-        while (pos < totalLength - 2) {
-          var snap = findNearestCandidate(candidates, Math.round(pos), period * 0.3);
-          if (snap !== null) { lines.push(snap); pos = snap + period; score++; }
-          else { lines.push(Math.round(pos)); pos += period; }
-        }
-        pos = candidates[s] - period;
-        while (pos > 2) {
-          var snap = findNearestCandidate(candidates, Math.round(pos), period * 0.3);
-          if (snap !== null) { lines.unshift(snap); pos = snap - period; score++; }
-          else { lines.unshift(Math.round(pos)); pos -= period; }
-        }
-        if (score > bestScore) { bestScore = score; bestLines = lines; }
-      }
-      return bestLines;
-    }
-
-    function findNearestCandidate(candidates, target, tolerance) {
-      var best = null, bestDist = tolerance + 1;
-      for (var i = 0; i < candidates.length; i++) {
-        var dist = Math.abs(candidates[i] - target);
-        if (dist < bestDist) { bestDist = dist; best = candidates[i]; }
-      }
-      return bestDist <= tolerance ? best : null;
-    }
-
-    function adjustLinesToCount(lines, target, totalLength) {
-      if (lines.length === target) return lines;
-      var medianGap = getMedianGap(lines);
-      // Merge too-close lines
-      var merged = [lines[0]];
-      for (var i = 1; i < lines.length; i++) {
-        if (lines[i] - merged[merged.length - 1] < medianGap * 0.5) {
-          merged[merged.length - 1] = Math.round((merged[merged.length - 1] + lines[i]) / 2);
-        } else {
-          merged.push(lines[i]);
-        }
-      }
-      // Split too-wide gaps
-      if (merged.length < target) {
-        var newMedian = getMedianGap(merged);
-        var result = [merged[0]];
-        for (var i = 1; i < merged.length; i++) {
-          var gap = merged[i] - merged[i - 1];
-          if (gap > newMedian * 1.5 && result.length < target - (merged.length - i)) {
-            var divisions = Math.round(gap / newMedian);
-            for (var d = 1; d < divisions; d++) {
-              result.push(Math.round(merged[i - 1] + gap * d / divisions));
-            }
-          }
-          result.push(merged[i]);
-        }
-        merged = result;
-      }
-      if (merged.length > target) merged = merged.slice(0, target);
-      return merged;
-    }
-
-    function getMedianGap(lines) {
-      var gaps = [];
-      for (var i = 1; i < lines.length; i++) gaps.push(lines[i] - lines[i - 1]);
-      gaps.sort(function(a, b) { return a - b; });
-      return gaps[Math.floor(gaps.length / 2)] || 1;
-    }
-
-    function computeCellBounds(vLines, hLines) {
-      var cells = [];
-      for (var r = 0; r < hLines.length - 1; r++) {
-        var row = [];
-        for (var c = 0; c < vLines.length - 1; c++) {
-          row.push({ x: vLines[c], y: hLines[r], w: vLines[c + 1] - vLines[c], h: hLines[r + 1] - hLines[r] });
-        }
-        cells.push(row);
-      }
-      return cells;
-    }
-
-    // === CHART SCAN: CENTER SAMPLING ===
-    function getCellCenterLuminance(imageData, cell, ratio) {
-      var data = imageData.data, w = imageData.width;
-      var marginX = cell.w * (1 - ratio) / 2;
-      var marginY = cell.h * (1 - ratio) / 2;
-      var sx = Math.round(cell.x + marginX);
-      var sy = Math.round(cell.y + marginY);
-      var sw = Math.max(1, Math.round(cell.w * ratio));
-      var sh = Math.max(1, Math.round(cell.h * ratio));
-      var totalLum = 0, pixelCount = 0;
-      for (var py = sy; py < sy + sh && py < imageData.height; py++) {
-        for (var px = sx; px < sx + sw && px < w; px++) {
-          var idx = (py * w + px) * 4;
-          totalLum += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-          pixelCount++;
-        }
-      }
-      return pixelCount > 0 ? totalLum / pixelCount : 255;
-    }
-
-    function processChartScanGrid(imageData, cells, threshold, invert, ratio) {
-      var grid = [];
-      for (var r = 0; r < cells.length; r++) {
-        var line = '';
-        for (var c = 0; c < Math.min(cells[r].length, 24); c++) {
-          var avgLum = getCellCenterLuminance(imageData, cells[r][c], ratio);
-          var isDark = avgLum < threshold;
-          var isPunched = invert ? !isDark : isDark;
-          line += isPunched ? 'x' : '-';
-        }
-        line = line.padEnd(24, '-').substring(0, 24);
-        grid.push(line);
-      }
-      return grid;
-    }
-
-    function otsuThreshold(values) {
-      var hist = new Array(256).fill(0);
-      for (var i = 0; i < values.length; i++) hist[Math.round(Math.max(0, Math.min(255, values[i])))]++;
-      var total = values.length;
-      var sumAll = 0;
-      for (var i = 0; i < 256; i++) sumAll += i * hist[i];
-      var bestThresh = 128, bestVariance = 0;
-      var sumBg = 0, countBg = 0;
-      for (var t = 0; t < 256; t++) {
-        countBg += hist[t];
-        if (countBg === 0) continue;
-        var countFg = total - countBg;
-        if (countFg === 0) break;
-        sumBg += t * hist[t];
-        var meanBg = sumBg / countBg;
-        var meanFg = (sumAll - sumBg) / countFg;
-        var bv = countBg * countFg * (meanBg - meanFg) * (meanBg - meanFg);
-        if (bv > bestVariance) { bestVariance = bv; bestThresh = t; }
-      }
-      return bestThresh;
-    }
-
-    // === DETECT GRID & PROCESS BUTTON ===
-    detectGridBtn.addEventListener('click', function() {
-      if (!sourceImage) return;
-
-      var userRows = parseInt(chartRowsInput.value);
-      if (!(userRows > 0)) {
-        gridStatus.textContent = 'Please enter the number of rows in the chart.';
-        gridStatus.style.color = 'var(--error)';
-        chartRowsInput.focus();
-        return;
-      }
-
-      gridStatus.textContent = 'Analyzing image...';
-      gridStatus.style.color = 'var(--muted)';
-      requestAnimationFrame(function() {
-        try {
-          var imgData = getCroppedImageData();
-          var w = imgData.width, h = imgData.height;
-
-          // Divide canvas evenly into 24 columns x userRows rows
-          var vLines = [];
-          var colStep = w / 24;
-          for (var i = 0; i <= 24; i++) vLines.push(Math.round(i * colStep));
-
-          var hLines = [];
-          var rowStep = h / userRows;
-          for (var i = 0; i <= userRows; i++) hLines.push(Math.round(i * rowStep));
-
-          var cells = computeCellBounds(vLines, hLines);
-          detectedCells = cells;
-          chartScanImageData = imgData;
-
-          var ratio = parseInt(sampleSlider.value) / 100;
-          var luminances = [];
-          for (var r = 0; r < cells.length; r++) {
-            for (var c = 0; c < Math.min(cells[r].length, 24); c++) {
-              luminances.push(getCellCenterLuminance(imgData, cells[r][c], ratio));
-            }
-          }
-
-          var autoThresh = otsuThreshold(luminances);
-          thresholdSlider.value = autoThresh;
-          thresholdValue.textContent = autoThresh;
-
-          var invert = invertToggle.checked;
-          var grid = processChartScanGrid(imgData, cells, autoThresh, invert, ratio);
-          currentGrid = grid;
-          renderPreview(grid);
-          generateBtn.disabled = false;
-
-          var numRows = cells.length;
-          gridStatus.textContent = '24 cols x ' + numRows + ' rows. Auto-threshold: ' + autoThresh;
-          gridStatus.style.color = 'var(--accent)';
-
-          // Update grid overlay for chart scan mode
-          gridOverlayInfo = { img: sourceImage, cols: 24, rows: userRows, cropRect: { x: cropRect.x, y: cropRect.y, w: cropRect.w, h: cropRect.h } };
-          gridOverlayToggleRow.style.display = '';
-          drawGridOverlay();
-        } catch (err) {
-          gridStatus.textContent = 'Error: ' + err.message + '. Try adjusting the crop.';
-          gridStatus.style.color = 'var(--error)';
-        }
-      });
-    });
-
-    // === PREVIEW ===
-    function renderPreview(grid) {
-      previewGrid.innerHTML = '';
-      if (grid.length === 0) {
-        rowCount.textContent = '';
-        previewHint.style.display = 'none';
-        document.getElementById('colNumToggleRow').style.display = 'none';
-        document.getElementById('editRowsToggleRow').style.display = 'none';
-        return;
-      }
-      previewHint.style.display = 'block';
-      document.getElementById('colNumToggleRow').style.display = '';
-      document.getElementById('editRowsToggleRow').style.display = '';
-
-      // Apply column number class based on toggle state
-      var showNums = document.getElementById('colNumToggle').checked;
-      previewGrid.classList.toggle('show-col-nums', showNums);
-
-      var editRows = document.getElementById('editRowsToggle').checked;
-      previewGrid.classList.toggle('edit-rows', editRows);
-
-      function addGutters(type, rowIdx) {
-        if (!editRows) return;
-        if (type === 'lead') {
-          var gl = document.createElement('div');
-          gl.className = 'row-gutter left';
-          previewGrid.appendChild(gl);
-        } else {
-          var gl = document.createElement('div');
-          gl.className = 'row-gutter left';
-          gl.innerHTML = '<span>' + (rowIdx + 1) + '</span><button class="row-del-btn" data-del-row="' + rowIdx + '" title="Delete row ' + (rowIdx + 1) + '">\u00d7</button>';
-          previewGrid.appendChild(gl);
-        }
-        return function() {
-          if (!editRows) return;
-          if (type === 'lead') {
-            var gr = document.createElement('div');
-            gr.className = 'row-gutter right';
-            previewGrid.appendChild(gr);
-          } else {
-            var gr = document.createElement('div');
-            gr.className = 'row-gutter right';
-            gr.innerHTML = '<button class="row-add-btn" data-add-after="' + rowIdx + '" title="Add row after ' + (rowIdx + 1) + '">+</button>';
-            previewGrid.appendChild(gr);
-          }
-        };
-      }
-
-      // Lead-in rows (2 fully punched)
-      for (let r = 0; r < 2; r++) {
-        var addRight = addGutters('lead', r);
-        for (let c = 0; c < 24; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell punched lead';
-          previewGrid.appendChild(cell);
-        }
-        if (addRight) addRight();
-      }
-
-      // Data rows
-      for (let r = 0; r < grid.length; r++) {
-        var addRight = addGutters('data', r);
-        for (let c = 0; c < 24; c++) {
-          const cell = document.createElement('div');
-          const isPunched = grid[r][c] === 'x';
-          cell.className = 'cell editable' + (isPunched ? ' punched' : '');
-          cell.dataset.row = r;
-          cell.dataset.col = c;
-          // Always add the column number span so toggling is instant
-          var numSpan = document.createElement('span');
-          numSpan.className = 'col-num';
-          numSpan.textContent = c + 1;
-          cell.appendChild(numSpan);
-          previewGrid.appendChild(cell);
-        }
-        if (addRight) addRight();
-      }
-
-      // Lead-out rows (2 fully punched)
-      for (let r = 0; r < 2; r++) {
-        var addRight = addGutters('lead', r);
-        for (let c = 0; c < 24; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell punched lead';
-          previewGrid.appendChild(cell);
-        }
-        if (addRight) addRight();
-      }
-
-      const total = grid.length + 4;
-      rowCount.textContent = grid.length + ' data rows + 4 lead rows = ' + total + ' total rows';
-    }
-
-    // === COLUMN NUMBER TOGGLE ===
-    document.getElementById('colNumToggle').addEventListener('change', function() {
-      previewGrid.classList.toggle('show-col-nums', this.checked);
-    });
-
-    // === EDIT ROWS TOGGLE ===
-    document.getElementById('editRowsToggle').addEventListener('change', function() {
-      renderPreview(currentGrid);
-    });
-
-    // === ROW DELETE / ADD ===
-    previewGrid.addEventListener('click', function(e) {
-      var delBtn = e.target.closest('[data-del-row]');
-      if (delBtn) {
-        var row = parseInt(delBtn.dataset.delRow);
-        if (currentGrid.length <= 1) return; // keep at least 1 row
-        currentGrid.splice(row, 1);
-        renderPreview(currentGrid);
-        if (currentMode === 'text') textInput.value = currentGrid.join('\n');
-        generatedSVGString = null;
-        svgOutput.innerHTML = '';
-        downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
-        return;
-      }
-      var addBtn = e.target.closest('[data-add-after]');
-      if (addBtn) {
-        var afterRow = parseInt(addBtn.dataset.addAfter);
-        currentGrid.splice(afterRow + 1, 0, '------------------------');
-        renderPreview(currentGrid);
-        if (currentMode === 'text') textInput.value = currentGrid.join('\n');
-        generatedSVGString = null;
-        svgOutput.innerHTML = '';
-        downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
-        return;
-      }
-    });
-
-    // === PREVIEW EDITING ===
-    previewGrid.addEventListener('click', (e) => {
-      var cell = e.target;
-      if (cell.classList.contains('col-num')) cell = cell.parentElement;
-      if (!cell.classList.contains('editable')) return;
-
-      const row = parseInt(cell.dataset.row);
-      const col = parseInt(cell.dataset.col);
-
-      const line = currentGrid[row];
-      const newChar = line[col] === 'x' ? '-' : 'x';
-      currentGrid[row] = line.substring(0, col) + newChar + line.substring(col + 1);
-
-      cell.classList.toggle('punched');
-
-      if (currentMode === 'text') {
-        textInput.value = currentGrid.join('\n');
-      }
-
-      generatedSVGString = null;
-      svgOutput.innerHTML = '';
-      downloadCutBtn.disabled = true; downloadDrawBtn.disabled = true; downloadCombinedBtn.disabled = true; downloadActions.style.display = 'none';
-    });
-
-    // === SVG GENERATION ===
-    function buildPolygonPoints(h) {
-      return [
-        '3.0,0', '139.0,0',
-        '140.0,1.7', '140.0,20', '142.0,22',
-        '142.0,' + fmtNum(h - 22),
-        '140.0,' + fmtNum(h - 20),
-        '140.0,' + fmtNum(h - 1.7),
-        '139.0,' + fmtNum(h),
-        '3.0,' + fmtNum(h),
-        '2.0,' + fmtNum(h - 1.7),
-        '2.0,' + fmtNum(h - 20),
-        '0,' + fmtNum(h - 22),
-        '0,22', '2.0,20', '2.0,1.7'
-      ].join(' ');
-    }
-
-    function fmtNum(n) {
-      // Format number: use integer if whole, otherwise preserve exact decimal
-      if (Number.isInteger(n)) return n.toFixed(1);
-      return String(n);
-    }
-
-    function circle(cx, cy, r, fill) {
-      return '<circle cx="' + fmtNum(cx) + '" cy="' + fmtNum(cy) +
-        '" fill="' + (fill || 'white') + '" r="' + fmtNum(r) + '" stroke="black" stroke-width="' + STROKE_W + '" />';
-    }
-
-    function generateSVG(grid, rowTypes, textOpts) {
-      const dataRows = grid.length;
-      const totalRows = dataRows + 4;
-      const h = totalRows * 5.0;
-
-      var showRowNums = textOpts && textOpts.rowNumbers;
-      var cardTitle = textOpts && textOpts.title ? textOpts.title.trim() : '';
-      var fontFamily = (textOpts && textOpts.fontFamily) || 'Arial, Helvetica, sans-serif';
-      var rowNumFontSize = 3; // mm
-      var titleFontSize = 5; // mm
-
-      // Row numbers inside the card, right of the right edge guide (128.5)
-      // Space between right edge guide and card edge notch (~140) = ~11.5mm
-      var rowNumX = 131.5; // centered in gap between edge guide (128.5) and card edge (~134)
-
-      // Title inside the card, left of the left edge guide (13.5)
-      // Space between card edge notch (~2) and left edge guide = ~11.5mm
-      var titleX = 7.75; // centered in gap between card edge (~2) and edge guide (13.5)
-
-      var parts = [];
-
-      parts.push('<?xml version="1.0" encoding="UTF-8" standalone="no"?>');
-      parts.push('<svg baseProfile="full" height="' + fmtNum(h) + 'mm" preserveAspectRatio="none" version="1.1" viewBox="0 0 ' + fmtNum(CARD_WIDTH) + ' ' + fmtNum(h) + '" width="' + fmtNum(CARD_WIDTH) + 'mm" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">');
-      parts.push('<defs />');
-
-      // === CUT GROUP ===
-      parts.push('<g id="cut">');
-
-      // Polygon outline
-      parts.push('<polygon fill="white" points="' + buildPolygonPoints(h) + '" stroke="black" stroke-width="' + STROKE_W + '" />');
-
-      // Interleave pattern rows and transport rows in y-order
-      for (let i = 0; i < totalRows; i++) {
-        const patternY = 2.5 + i * 5.0;
-
-        // Left edge guide
-        parts.push(circle(EDGE_GUIDE_X[0], patternY, EDGE_R));
-
-        // Pattern holes
-        const isFullRow = (i < 2) || (i >= totalRows - 2);
-        var holeFill = 'white';
-        if (!isFullRow && rowTypes && rowTypes[i - 2] === 'inverse') {
-          holeFill = '#ab96af';
-        }
-        for (let c = 0; c < 24; c++) {
-          let punched;
-          if (isFullRow) {
-            punched = true;
-          } else {
-            punched = grid[i - 2][c] === 'x';
-          }
-          if (punched) {
-            parts.push(circle(PATTERN_COLS[c], patternY, PATTERN_R, holeFill));
-          }
-        }
-
-        // Right edge guide
-        parts.push(circle(EDGE_GUIDE_X[1], patternY, EDGE_R));
-
-        // Transport holes (Silver Reed: only at top and bottom of card)
-        if (i < totalRows - 1) {
-          const transportY = 5.0 + i * 5.0;
-          if (i === 0 || i === 2 || i === totalRows - 4 || i === totalRows - 2) {
-            for (const tx of TRANSPORT_X) {
-              parts.push(circle(tx, transportY, TRANSPORT_R));
-            }
-          }
-        }
-      }
-
-      parts.push('</g>'); // end cut
-
-      // === DRAW GROUP (text annotations — inside the card) ===
-      var hasDrawContent = showRowNums || cardTitle;
-      if (hasDrawContent) {
-        parts.push('<g id="draw">');
-
-        // Row numbers: labels increase bottom-to-top, offset by machine shift.
-        // Top 2 lead-in rows are numbered (continuing the sequence above top data row).
-        // Bottom 2 lead-out rows are NOT numbered.
-        var machineOffset = (textOpts && textOpts.machineOffset) || 0;
-        var patternLen = (textOpts && textOpts.preShiftLen) || dataRows;
-        var shift = patternLen > 0 ? (machineOffset % patternLen) : 0;
-        var row1DrFound = -1;
-        if (showRowNums) {
-          // Data rows (skip bottom 2 data rows — they join the lead-out rows unnumbered)
-          for (var dr = 0; dr < dataRows - 2; dr++) {
-            var rowY = 2.5 + (dr + 2) * 5.0;
-            var bottomUp = dataRows - 1 - dr;
-            var rowLabel = ((patternLen - shift + bottomUp) % patternLen) + 1;
-            if (rowLabel === 1) row1DrFound = dr;
-            parts.push('<text x="' + fmtNum(rowNumX) + '" y="' + fmtNum(rowY) + '" font-family="' + fontFamily + '" font-size="' + rowNumFontSize + '" fill="black" dominant-baseline="central" text-anchor="start">' + rowLabel + '</text>');
-          }
-          // Still need to find row 1 even if it's in the skipped bottom rows
-          if (row1DrFound < 0) {
-            for (var dr = dataRows - 2; dr < dataRows; dr++) {
-              var bottomUp = dataRows - 1 - dr;
-              var rowLabel = ((patternLen - shift + bottomUp) % patternLen) + 1;
-              if (rowLabel === 1) { row1DrFound = dr; break; }
-            }
-          }
-          // Top 2 lead-in rows: continue the sequence above top data row
-          // Top data row (dr=0) label is known; lead-in rows get +1 and +2
-          var topLabel = ((patternLen - shift + dataRows - 1) % patternLen) + 1;
-          for (var li = 0; li < 2; li++) {
-            var leadY = 2.5 + (1 - li) * 5.0; // i=1 then i=0 (second lead-in, then first)
-            var leadLabel = ((topLabel + li) % patternLen) + 1;
-            parts.push('<text x="' + fmtNum(rowNumX) + '" y="' + fmtNum(leadY) + '" font-family="' + fontFamily + '" font-size="' + rowNumFontSize + '" fill="black" dominant-baseline="central" text-anchor="start">' + leadLabel + '</text>');
-          }
-        }
-
-        // Thick separator line just below row "1"
-        if (row1DrFound >= 0) {
-          var sepY = 2.5 + (row1DrFound + 2) * 5.0 + 2.5;
-          parts.push('<line x1="' + fmtNum(EDGE_GUIDE_X[0] - EDGE_R) + '" y1="' + fmtNum(sepY) + '" x2="' + fmtNum(EDGE_GUIDE_X[1] + EDGE_R) + '" y2="' + fmtNum(sepY) + '" stroke="black" stroke-width="0.5" />');
-        }
-
-        // Card title on the left side, rotated 90deg (reading bottom-to-top)
-        if (cardTitle) {
-          var titleCenterY = h / 2;
-          parts.push('<text x="' + fmtNum(titleX) + '" y="' + fmtNum(titleCenterY) + '" font-family="' + fontFamily + '" font-size="' + titleFontSize + '" fill="black" dominant-baseline="central" text-anchor="middle" transform="rotate(-90,' + fmtNum(titleX) + ',' + fmtNum(titleCenterY) + ')">' + escapeXml(cardTitle) + '</text>');
-        }
-
-        parts.push('</g>'); // end draw
-      }
-
-      parts.push('</svg>');
-      return parts.join('');
-    }
-
-    function escapeXml(s) {
-      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-    }
-
-    function extractSVGLayer(svgString, layerId) {
-      // Parse the SVG and return a version containing only the specified layer
-      var parser = new DOMParser();
-      var doc = parser.parseFromString(svgString, 'image/svg+xml');
-      var svg = doc.querySelector('svg');
-      if (!svg) return svgString;
-
-      // Remove layers that don't match
-      var groups = svg.querySelectorAll('g[id]');
-      for (var i = 0; i < groups.length; i++) {
-        if (groups[i].id !== layerId) {
-          groups[i].parentNode.removeChild(groups[i]);
-        }
-      }
-
-      return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + new XMLSerializer().serializeToString(svg);
-    }
-
-    // === ACTIONS ===
-    function expandJacquard(grid) {
-      var result = [];
-      var types = [];
-      for (var i = 0; i < grid.length; i += 2) {
-        // Push the pair of original rows
-        result.push(grid[i]);
-        types.push('original');
-        if (i + 1 < grid.length) {
-          result.push(grid[i + 1]);
-          types.push('original');
-        }
-        // Push inverse of the pair
-        var inv1 = '';
-        for (var c = 0; c < grid[i].length; c++) {
-          inv1 += grid[i][c] === 'x' ? '-' : 'x';
-        }
-        result.push(inv1);
-        types.push('inverse');
-        if (i + 1 < grid.length) {
-          var inv2 = '';
-          for (var c = 0; c < grid[i + 1].length; c++) {
-            inv2 += grid[i + 1][c] === 'x' ? '-' : 'x';
-          }
-          result.push(inv2);
-          types.push('inverse');
-        }
-      }
-      return { grid: result, types: types };
-    }
-
-    function getMachineOffset() {
-      const selected = document.querySelector('input[name="machineOffset"]:checked');
-      return selected ? parseInt(selected.value) : 0;
-    }
-
-    function shiftGridForMachine(grid, offset, types) {
-      if (offset <= 0 || grid.length === 0) return { grid: grid, types: types };
-      const shift = offset % grid.length;
-      if (shift === 0) return { grid: grid, types: types };
-      return {
-        grid: grid.slice(shift).concat(grid.slice(0, shift)),
-        types: types ? types.slice(shift).concat(types.slice(0, shift)) : null
-      };
-    }
-
-    function repeatGrid(grid, times, types) {
-      if (times <= 1) return { grid: grid, types: types };
-      var resultGrid = [];
-      var resultTypes = types ? [] : null;
-      for (var i = 0; i < times; i++) {
-        resultGrid = resultGrid.concat(grid);
-        if (types) resultTypes = resultTypes.concat(types);
-      }
-      return { grid: resultGrid, types: resultTypes };
-    }
-
-    function getTextOpts() {
-      return {
-        rowNumbers: document.getElementById('rowNumbersToggle').checked,
-        title: document.getElementById('cardTitleInput').value,
-        fontFamily: document.getElementById('fontPicker').value
-      };
-    }
-
-    generateBtn.addEventListener('click', () => {
-      if (currentGrid.length === 0) return;
-      var repeats = Math.max(1, Math.min(50, parseInt(document.getElementById('repeatCount').value) || 1));
-      var grid, rowTypes = null;
-      if (jacquardToggle.checked) {
-        var jq = expandJacquard(currentGrid);
-        grid = jq.grid;
-        rowTypes = jq.types;
-      } else {
-        grid = currentGrid;
-      }
-      var rp = repeatGrid(grid, repeats, rowTypes);
-      grid = rp.grid;
-      rowTypes = rp.types;
-      var preShiftLen = grid.length;
-      var offset = getMachineOffset();
-      var textOpts = getTextOpts();
-      textOpts.preShiftLen = preShiftLen;
-      textOpts.machineOffset = offset;
-      generatedSVGString = generateSVG(grid, rowTypes, textOpts);
-      // Show inline (strip the XML declaration for innerHTML)
-      const displaySVG = generatedSVGString.replace(/<\?xml[^?]*\?>/, '');
-      svgOutput.innerHTML = displaySVG;
-      // Enable download buttons
-      var hasDrawContent = textOpts.rowNumbers || textOpts.title.trim();
-      downloadActions.style.display = 'flex';
-      downloadCombinedBtn.disabled = false;
-      downloadCutBtn.disabled = false;
-      downloadDrawBtn.disabled = !hasDrawContent;
-    });
-
-    function downloadSVG(svgStr, suffix) {
-      var blob = new Blob([svgStr], { type: 'image/svg+xml' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'punchcard-' + suffix + '-' + Date.now() + '.svg';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    downloadCombinedBtn.addEventListener('click', () => {
-      if (!generatedSVGString) return;
-      downloadSVG(generatedSVGString, 'combined');
-    });
-
-    downloadCutBtn.addEventListener('click', () => {
-      if (!generatedSVGString) return;
-      downloadSVG(extractSVGLayer(generatedSVGString, 'cut'), 'cut');
-    });
-
-    downloadDrawBtn.addEventListener('click', () => {
-      if (!generatedSVGString) return;
-      downloadSVG(extractSVGLayer(generatedSVGString, 'draw'), 'draw');
-    });
-
-    // === PWA ===
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
-        .then((reg) => console.log('SW registered:', reg.scope))
-        .catch((err) => console.log('SW registration failed:', err));
-    }
-  </script>
+  <div id="lightboxOverlay" style="display:none">
+    <div id="lightboxContent"></div>
+  </div>
+
+  <!-- Hidden file input for .txt import from dropdown -->
+  <input type="file" id="txtFileImport" accept=".txt,text/plain" style="display:none">
+
+  <script src="patterns.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
