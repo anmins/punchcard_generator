@@ -1590,8 +1590,6 @@ function generateSVG(grid, rowTypes, textOpts) {
     }
   }
 
-  parts.push('</g>');
-
   var hasDrawContent = showRowNums || cardTitle;
   if (hasDrawContent) {
     parts.push('<g id="draw">');
