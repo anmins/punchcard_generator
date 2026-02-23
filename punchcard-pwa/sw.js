@@ -1,4 +1,4 @@
-const CACHE_NAME = 'punchcard-v7';
+const CACHE_NAME = 'punchcard-v8';
 const ASSETS = [
   './',
   './index.html',
