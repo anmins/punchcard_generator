@@ -1660,28 +1660,29 @@ function extractSVGLayer(svgString, layerId) {
 
 // === ACTIONS ===
 function expandJacquard(grid) {
+  // Pattern per row pair (1-indexed):
+  //   odd row:  inverse, original
+  //   even row: original, inverse
+  // Which gives the sequence:
+  //   row1-inv, row1-orig, row2-orig, row2-inv, row3-inv, row3-orig, row4-orig, row4-inv, ...
   var result = [];
   var types = [];
-  for (var i = 0; i < grid.length; i += 2) {
-    result.push(grid[i]);
-    types.push('original');
-    if (i + 1 < grid.length) {
-      result.push(grid[i + 1]);
-      types.push('original');
-    }
-    var inv1 = '';
-    for (var c = 0; c < grid[i].length; c++) {
-      inv1 += grid[i][c] === 'x' ? '-' : 'x';
-    }
-    result.push(inv1);
-    types.push('inverse');
-    if (i + 1 < grid.length) {
-      var inv2 = '';
-      for (var c = 0; c < grid[i + 1].length; c++) {
-        inv2 += grid[i + 1][c] === 'x' ? '-' : 'x';
-      }
-      result.push(inv2);
-      types.push('inverse');
+  function invert(row) {
+    var inv = '';
+    for (var c = 0; c < row.length; c++) inv += row[c] === 'x' ? '-' : 'x';
+    return inv;
+  }
+  for (var i = 0; i < grid.length; i++) {
+    var rowNum = i + 1; // 1-indexed
+    var inv = invert(grid[i]);
+    if (rowNum % 2 === 1) {
+      // odd row: inverse first, then original
+      result.push(inv);   types.push('inverse');
+      result.push(grid[i]); types.push('original');
+    } else {
+      // even row: original first, then inverse
+      result.push(grid[i]); types.push('original');
+      result.push(inv);   types.push('inverse');
     }
   }
   return { grid: result, types: types };
